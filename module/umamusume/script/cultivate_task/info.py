@@ -7,9 +7,10 @@ from module.umamusume.task import EndTaskReason as UEndTaskReason
 from bot.recog.image_matcher import image_match
 from bot.recog.ocr import ocr_line, find_similar_text
 from module.umamusume.asset.point import *
-from module.umamusume.asset.ui import INFO
+from module.umamusume.asset.ui import INFO, CULTIVATE_MAIN_MENU
 from module.umamusume.context import UmamusumeContext
 import bot.base.log as logger
+from .cultivate import script_umamusume_detail
 
 log = logger.get_logger(__name__)
 
@@ -42,7 +43,10 @@ TITLE = [
     "活动剧情解锁",
     "确认",
     "回复训练值",
-    "选择养成难度"
+    "选择养成难度",
+    "公告",
+    "继续养成",
+    "关注训练员",
 ]
 
 
@@ -94,6 +98,8 @@ def script_info(ctx: UmamusumeContext):
         if title_text == TITLE[10]:
             ctx.ctrl.click_by_point(CULTIVATE_FINISH_CONFIRM_AGAIN)
         if title_text == TITLE[11]:
+            if ctx.prev_ui is CULTIVATE_MAIN_MENU:
+                script_umamusume_detail(ctx)
             ctx.ctrl.click_by_point(CULTIVATE_RESULT_CONFIRM)
         if title_text == TITLE[12]:
             ctx.ctrl.click_by_point(CULTIVATE_FAN_NOT_ENOUGH_RETURN)
@@ -144,5 +150,11 @@ def script_info(ctx: UmamusumeContext):
                 ctx.ctrl.click_by_point(USE_TP_DRINK_RESULT_CLOSE)
         if title_text == TITLE[28]:
             ctx.ctrl.click_by_point(SELECT_DIFFICULTY)
+        if title_text == TITLE[29]:
+            ctx.ctrl.click_by_point(CLOSE_NEWS)
+        if title_text == TITLE[30]:
+            ctx.ctrl.click_by_point(CULTIVATE_CONTINUE)
+        if title_text == TITLE[31]:
+            ctx.ctrl.click_by_point(FOLLOW_CANCLE)
         time.sleep(1)
 

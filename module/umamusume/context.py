@@ -70,6 +70,10 @@ class UmaAttribute:
         self.skill_point = 0
 
 
+class HintLevel:
+    pass
+
+
 class TurnOperation:
     turn_operation_type: TurnOperationType
     turn_operation_type_replace: TurnOperationType
@@ -104,6 +108,10 @@ class TurnInfo:
     turn_operation: TurnOperation | None
     turn_info_logged: bool
     turn_learn_skill_done: bool
+    
+    uma_condition: list[Condition]
+    skill_hint: list[HintLevel]
+    parse_condition_finish: bool
 
     def __init__(self):
         self.date = -1
@@ -118,6 +126,9 @@ class TurnInfo:
         self.turn_operation = None
         self.turn_info_logged = False
         self.turn_learn_skill_done = False
+        self.uma_condition = []
+        self.skill_hint = []
+        self.parse_condition_finish = False
 
     def log_turn_info(self):
         log.info("当前回合时间 >" + str(self.date))
@@ -135,6 +146,8 @@ class TurnInfo:
         self.training_info_list[3].log_training_info()
         log.info("智力训练结果：")
         self.training_info_list[4].log_training_info()
+        log.debug("当前状态：" + ' '.join(map(str, self.uma_condition)))
+        log.debug("已获得技能启示：" + ' '.join(map(str, self.skill_hint)))
 
 
 class CultivateContextDetail:
@@ -159,6 +172,7 @@ class CultivateContextDetail:
     allow_recover_tp: bool
     parse_factor_done: bool
     extra_weight: list
+    umamusume: str | None
 
     def __init__(self):
         self.expect_attribute = None
@@ -177,6 +191,7 @@ class CultivateContextDetail:
         self.allow_recover_tp = False
         self.parse_factor_done = False
         self.extra_weight = []
+        self.umamusume = None
 
     def reset_skill_learn(self):
         self.learn_skill_done = False

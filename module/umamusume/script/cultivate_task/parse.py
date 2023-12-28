@@ -160,11 +160,18 @@ def trans_attribute_value(text: str, ctx: UmamusumeContext,
 
 
 def parse_umamusume_remain_stamina_value(ctx: UmamusumeContext, img):
-    sub_img_remain_stamina = img[160:161, 229:505]
+    # 应对体力槽加长，初始是229：505，增加20%应该够了
+    sub_img_remain_stamina = img[160:161, 229:560]
     stamina_counter = 0
     for c in sub_img_remain_stamina[0]:
         if not compare_color_equal(c, [117, 117, 117]):
             stamina_counter += 1
+        else:
+            break
+        # 满体力会读到白色轮廓。避免识别失误，未到满体力不退出。
+        if compare_color_equal(c, [255, 255, 255]) and stamina_counter > 276:
+            stamina_counter -= 3
+            break
     remain_stamina = int(stamina_counter / 276 * 100)
     ctx.cultivate_detail.turn_info.remain_stamina = remain_stamina
 
@@ -546,3 +553,8 @@ def parse_factor(ctx: UmamusumeContext):
             break
     ctx.cultivate_detail.parse_factor_done = True
     ctx.task.detail.cultivate_result['factor_list'] = factor_list
+
+
+def parse_umamusume_detail(ctx: UmamusumeContext):
+    ctx.cultivate_detail.turn_info.parse_condition_finish = True
+    print("成功进入parse")

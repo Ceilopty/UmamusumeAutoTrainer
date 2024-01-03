@@ -115,7 +115,7 @@ def script_info(ctx: UmamusumeContext):
             date = ctx.cultivate_detail.turn_info.date
             if date != -1:
                 if date <= 72:
-                    ctx.ctrl.click_by_point(TACTIC_LIST[ctx.cultivate_detail.tactic_list[int((date - 1)/ 24)] - 1])
+                    ctx.ctrl.click_by_point(TACTIC_LIST[ctx.cultivate_detail.tactic_list[int((date - 1) / 24)] - 1])
                 else:
                     ctx.ctrl.click_by_point(TACTIC_LIST[ctx.cultivate_detail.tactic_list[2] - 1])
             time.sleep(0.5)
@@ -137,16 +137,24 @@ def script_info(ctx: UmamusumeContext):
         if title_text == TITLE[25]:
             ctx.ctrl.click_by_point(ACTIVITY_STORY_UNLOCK_CONFIRM)
         if title_text == TITLE[26]:
-            if not ctx.cultivate_detail.allow_recover_tp:
-                ctx.task.end_task(TaskStatus.TASK_STATUS_FAILED, UEndTaskReason.TP_NOT_ENOUGH)
-            else:
+            if ctx.cultivate_detail.allow_recover_tp_drink or \
+                    ctx.cultivate_detail.allow_recover_tp_diamond:
                 ctx.ctrl.click_by_point(TO_RECOVER_TP)
+            else:
+                ctx.task.end_task(TaskStatus.TASK_STATUS_FAILED, UEndTaskReason.TP_NOT_ENOUGH)
         if title_text == TITLE[27]:
             if image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_1).find_match:
-                ctx.ctrl.click_by_point(USE_TP_DRINK)
-            elif image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_2).find_match:
+                if ctx.cultivate_detail.allow_recover_tp_drink:
+                    ctx.ctrl.click_by_point(USE_TP_DRINK)
+                elif ctx.cultivate_detail.allow_recover_tp_diamond:
+                    ctx.ctrl.click_by_point(USE_DIAMOND)
+            elif image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_2).find_match or \
+                    image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_4).find_match:
+                ctx.ctrl.click_by_point(USE_DIAMOND_CONFIRM_MAX)
+                time.sleep(0.1)
                 ctx.ctrl.click_by_point(USE_TP_DRINK_CONFIRM)
-            elif image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_3).find_match:
+            elif image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_3).find_match or \
+                    image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_5).find_match:
                 ctx.ctrl.click_by_point(USE_TP_DRINK_RESULT_CLOSE)
         if title_text == TITLE[28]:
             ctx.ctrl.click_by_point(SELECT_DIFFICULTY)
@@ -157,4 +165,3 @@ def script_info(ctx: UmamusumeContext):
         if title_text == TITLE[31]:
             ctx.ctrl.click_by_point(FOLLOW_CANCLE)
         time.sleep(1)
-

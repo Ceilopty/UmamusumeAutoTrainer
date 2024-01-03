@@ -108,3 +108,5 @@ TO_ABILITY_DETAIL = ClickPoint(ClickPointType.CLICK_POINT_TYPE_COORDINATE, None,
 CLOSE_NEWS = ClickPoint(ClickPointType.CLICK_POINT_TYPE_COORDINATE, None, Coordinate(365, 1185), "关闭公告", None)
 CULTIVATE_CONTINUE = ClickPoint(ClickPointType.CLICK_POINT_TYPE_COORDINATE, None, Coordinate(520, 920), "继续养成确认", None)
 FOLLOW_CANCLE = ClickPoint(ClickPointType.CLICK_POINT_TYPE_COORDINATE, None, Coordinate(200, 830), "关注训练员-取消", None)
+USE_DIAMOND = ClickPoint(ClickPointType.CLICK_POINT_TYPE_COORDINATE, None, Coordinate(610, 180), "使用宝石", None)
+USE_DIAMOND_CONFIRM_MAX = ClickPoint(ClickPointType.CLICK_POINT_TYPE_COORDINATE, None, Coordinate(610, 670), "使用宝石-最大", None)

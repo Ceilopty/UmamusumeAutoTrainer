@@ -9,18 +9,34 @@ log = logger.get_logger(__name__)
 class SupportCardInfo:
     name: str
     card_type: SupportCardType
-    favor: SupportCardFavorLevel
+    _favor: SupportCardFavorLevel
     has_event: bool
+    favor_num: int | None
 
     def __init__(self,
                  name: str = "support_card",
                  card_type: SupportCardType = SupportCardType.SUPPORT_CARD_TYPE_UNKNOWN,
                  favor: SupportCardFavorLevel = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_UNKNOWN,
-                 has_event: bool = False):
+                 has_event: bool = False,
+                 favor_num: int | None = None):
         self.name = name
         self.card_type = card_type
-        self.favor = favor
+        self._favor = favor
         self.has_event = has_event
+        self.favor_num = favor_num
+
+    @property
+    def favor(self):
+        """分四段，分别是绿松石(<60)，绿(<80)，金（<100），黄绿(100)"""
+        if self.favor_num is not None:
+            return SupportCardFavorLevel(1 if self.favor_num < 60 else self.favor_num // 20 - 1)
+        else:
+            return self._favor
+
+    @favor.setter
+    def favor(self, favor: SupportCardFavorLevel):
+        if self.favor_num is None:
+            self._favor = favor
 
 
 class TrainingInfo:
@@ -31,6 +47,7 @@ class TrainingInfo:
     will_incr: int
     intelligence_incr: int
     skill_point_incr: int
+    vital_incr: int
 
     def __init__(self):
         self.speed_incr = 0
@@ -40,15 +57,18 @@ class TrainingInfo:
         self.intelligence_incr = 0
         self.skill_point_incr = 0
         self.support_card_info_list = []
+        self.vital_incr = 0
 
     def log_training_info(self):
-        log.info("训练结果：速度：%s, 耐力：%s, 力量：%s, 毅力：%s, 智力：%s, 技能点：%s", self.speed_incr,
+        log.info("训练结果：速度：%s, 耐力：%s, 力量：%s, 毅力：%s, 智力：%s, 技能点：%s, %s体力：%s", self.speed_incr,
                  self.stamina_incr, self.power_incr, self.will_incr,
-                 self.intelligence_incr, self.skill_point_incr)
+                 self.intelligence_incr, self.skill_point_incr,
+                 "消耗" if self.vital_incr < 0 else "回复" if self.vital_incr > 0 else "", abs(self.vital_incr))
         text = "此训练附带支援卡列表：["
         for c in self.support_card_info_list:
             if c.favor != SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_UNKNOWN:
-                text += "[支援卡名称：" + str(c.name) + "支援卡类型：" + str(c.card_type.name) + ", 支援卡羁绊阶段：" + str(c.favor.name) + "] "
+                text += "[支援卡名称：" + str(c.name) + "支援卡类型：" + str(
+                    c.card_type.name) + ", 支援卡羁绊阶段：" + str(c.favor.name) + "] "
         text += "]"
         log.info(text)
 
@@ -108,7 +128,7 @@ class TurnInfo:
     turn_operation: TurnOperation | None
     turn_info_logged: bool
     turn_learn_skill_done: bool
-    
+
     uma_condition: list[Condition]
     skill_hint: list[HintLevel]
     parse_condition_finish: bool
@@ -135,7 +155,8 @@ class TurnInfo:
         log.info("干劲状态 " + str(self.motivation_level.name))
         log.info("体力剩余" + str(self.remain_stamina))
         log.info("当前属性值 速度：%s, 耐力：%s, 力量：%s, 毅力：%s, 智力：%s, 技能点：%s", self.uma_attribute.speed,
-                 self.uma_attribute.stamina, self.uma_attribute.power, self.uma_attribute.will, self.uma_attribute.intelligence, self.uma_attribute.skill_point)
+                 self.uma_attribute.stamina, self.uma_attribute.power, self.uma_attribute.will,
+                 self.uma_attribute.intelligence, self.uma_attribute.skill_point)
         log.info("速度训练结果：")
         self.training_info_list[0].log_training_info()
         log.info("耐力训练结果：")
@@ -230,8 +251,3 @@ def build_context(task: UmamusumeTask, ctrl) -> UmamusumeContext:
         detail.extra_weight = task.detail.extra_weight
         ctx.cultivate_detail = detail
     return ctx
-
-
-
-
-

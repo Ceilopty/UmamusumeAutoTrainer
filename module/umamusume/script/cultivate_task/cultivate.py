@@ -9,6 +9,7 @@ from module.umamusume.context import TurnInfo
 from module.umamusume.script.cultivate_task.const import SKILL_LEARN_PRIORITY_LIST
 from module.umamusume.script.cultivate_task.event import Event
 from module.umamusume.script.cultivate_task.parse import *
+from module.umamusume.script.ura.cultivate import ura_parse_cultivate_main_menu
 
 log = logger.get_logger(__name__)
 
@@ -35,6 +36,8 @@ def script_cultivate_main_menu(ctx: UmamusumeContext):
             ctx.cultivate_detail.turn_info.skill_hint = history[-1].skill_hint.copy()
 
     # 解析主界面
+    if not ctx.cultivate_detail.turn_info.parse_main_menu_finish:
+        ura_parse_cultivate_main_menu(ctx, img)
     if not ctx.cultivate_detail.turn_info.parse_main_menu_finish:
         parse_cultivate_main_menu(ctx, img)
 

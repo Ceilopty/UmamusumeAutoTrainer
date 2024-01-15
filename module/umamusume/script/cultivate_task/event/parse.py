@@ -12,10 +12,14 @@ P_S = 0.5
 P_F = 0.5
 
 EventEffect = namedtuple('EventEffect', ('motivation', 'vital', 'max_vital',
-                                         'speed_incr', 'stamina_incr', 'power_incr', 'will_incr',
-                                         'intelligence_incr', 'skill_point_incr', 'skill_hint',
-                                         'condition', 'last_train', 'random_attr', 'favor', 'fan', 'other'),
-                         defaults=(0, 0, 0, 0, 0, 0, 0, 0, 0, (None, 0), None, 0, (0, 0), 0, 0, None))
+                                         'speed_incr', 'stamina_incr', 'power_incr', 'guts_incr', 'wiz_incr',
+                                         'speed_limit_incr', 'stamina_limit_incr', 'power_limit_incr',
+                                         'guts_limit_incr', 'wiz_limit_incr', 'all_limit_incr', 'skill_point_incr',
+                                         'skill_hint', 'skill', 'condition', 'condition_clear',
+                                         'last_train', 'random_attr', 'train_lv', 'favor', 'fan', 'other'),
+                         defaults=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                   (None, 0), None, None, None,
+                                   0, (0, 0), 0, 0, 0, None))
 
 EventChoice = namedtuple('EventChoice', ('possibility', 'event_effect'),
                          defaults=(1, None))

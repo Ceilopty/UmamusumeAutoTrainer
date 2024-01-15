@@ -4,7 +4,7 @@ print(__name__)
 
 # Kyoutsuu
 k1 = '意外情况应对方案', (
-    ((1, {'will_incr': 10,
+    ((1, {'guts_incr': 10,
           'favor': 5,
           }),
      ),
@@ -21,7 +21,7 @@ k2 = '意料之外的午餐', (
      ),
     ((1, {'favor': 5,
           'speed_incr': 5,
-          'will_incr': 5,
+          'guts_incr': 5,
           }),
      ),
     ), 1

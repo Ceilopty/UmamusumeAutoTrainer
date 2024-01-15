@@ -2,7 +2,7 @@ print(__name__)
 
 # 超越那前方的背影
 s2 = '光钻的执著', (
-    ((1, {'intelligence_incr': 10,
+    ((1, {'wiz_incr': 10,
           'favor': 5,
           }),
      ),
@@ -11,7 +11,7 @@ s2 = '光钻的执著', (
             'favor': 5,
             }),
      ('F', {'motivation': -1,
-            'will_incr': 20,
+            'guts_incr': 20,
             }),
      ),
     ), 2
@@ -24,7 +24,7 @@ s3 = '唯独不能输给你', (
           }),
      ),
     ((1, {'vital': 5,
-          'will_incr': 5,
+          'guts_incr': 5,
           'favor': 5,
           'skill_hint': ('钢铁意志', 1),
           }),
@@ -34,7 +34,7 @@ s3 = '唯独不能输给你', (
 # Kyoutsuu
 k1 = '最喜欢困难事了！', (
     ((1, {'stamina_incr': 5,
-          'will_incr': 10,
+          'guts_incr': 10,
           'favor': 5,
           }),
      ),
@@ -45,7 +45,7 @@ k1 = '最喜欢困难事了！', (
     ), 1
 
 k2 = '最喜欢新事物了', (
-    ((1, {'will_incr': 10,
+    ((1, {'guts_incr': 10,
           'favor': 5,
           }),
      ),

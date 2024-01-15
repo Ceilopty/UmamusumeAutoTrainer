@@ -47,6 +47,8 @@ TITLE = [
     "公告",
     "继续养成",
     "关注训练员",
+    "日期变化",
+    "连接已断开",
 ]
 
 
@@ -163,5 +165,9 @@ def script_info(ctx: UmamusumeContext):
         if title_text == TITLE[30]:
             ctx.ctrl.click_by_point(CULTIVATE_CONTINUE)
         if title_text == TITLE[31]:
-            ctx.ctrl.click_by_point(FOLLOW_CANCLE)
+            ctx.ctrl.click_by_point(FOLLOW_CANCEL)
+        if title_text == TITLE[32]:
+            ctx.ctrl.click_by_point(DATE_CHANGE_CONFIRM)
+        if title_text == TITLE[33]:
+            ctx.ctrl.click_by_point(CONNECTION_LOST_RESUME)
         time.sleep(1)

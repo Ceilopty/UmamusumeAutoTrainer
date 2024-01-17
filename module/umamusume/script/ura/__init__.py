@@ -36,7 +36,7 @@ def br2json():
 
 
 if __name__ == '__main__':
-    # json2br()
+    json2br()
     # msgpack2json()
     # br2json()
     pass

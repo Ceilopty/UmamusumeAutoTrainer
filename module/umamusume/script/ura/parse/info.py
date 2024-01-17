@@ -79,7 +79,7 @@ class OriginEventInfo(Data):
             target_race_id: int
         support_card_id: int
         show_clear: int
-        show_sort_id: int
+        show_clear_sort_id: int
         choice_array: Array[Choice]
         is_effected_multi_chara: int
     event_id: int

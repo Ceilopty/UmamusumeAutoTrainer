@@ -76,19 +76,33 @@ class Condition(Enum):
     CONDITION_POSITIVESHIKOU = 25
     CONDITION_YOFUKASHIGIMI = 1
     CONDITION_RENSHUUBETA = 6
-    CONDITION_NAMAKEKUSE = 2
+    CONDITION_NAMAKEGUSE = 2
     CONDITION_FUTORIGIMI = 4
     CONDITION_KATAZUTSUU = 5
     CONDITION_HADAARE = 3
     CONDITION_CHIISANAHOKOROBI = 12
     CONDITION_TAIRINNOKAGAYAKI = 13
-    CONDITION_RENSHUUJOUZU_MARUMARU = 11
+    CONDITION_RENSHUUJOUZU_NIJUUMARU = 11
     CONDITION_FANTONOYAKUSOKU_HOKUTOU = 15
     CONDITION_FANTONOYAKUSOKU_HOKKAIDO = 14
     CONDITION_FANTONOYAKUSOKU_NAMAYAMA = 16
     CONDITION_FANTONOYAKUSOKU_KANSAI = 17
     CONDITION_FANTONOYAKUSOKU_KOKURA = 18
+    CONDITION_GLASSNOASHI = 20
+    CONDITION_AYASHIIKUMOYUKI = 21
     CONDITION_FANTONOYAKUSOKU_KAWASAKI = 22
     CONDITION_MADAMADAJUNBICHUU = 19
-    CONDITION_EIYUUNOKOUHEI = 23
+    CONDITION_EIYUUNOKOUKI = 23
     CONDITION_HARUMATSUTSUBOMI = 24
+    CONDITION_ALL = 0
+
+    def __str__(self):
+        return {1: '夜ふかし気味', 2: 'なまけ癖', 3: '肌あれ', 4: '太り気味',
+                5: '片頭痛', 6: '練習ベタ', 7: '切れ者', 8: '愛嬌◯', 9: '注目株',
+                10: '練習上手◯', 11: '練習上手◎', 12: '小さなほころび',
+                13: '大輪の輝き', 14: 'ファンとの約束・北海道', 15: 'ファンとの約束・北東',
+                16: 'ファンとの約束・中山', 17: 'ファンとの約束・関西',
+                18: 'ファンとの約束・小倉', 19: 'まだまだ準備中', 20: 'ガラスの脚',
+                21: '怪しい雲行き', 22: 'ファンとの約束・川崎', 23: '英雄の光輝',
+                24: '春待つ蕾', 25: 'ポジティブ思考', 26: '幸運体質'}.get(self.value, "")
+    __repr__ = __str__

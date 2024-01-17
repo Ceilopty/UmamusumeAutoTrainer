@@ -553,8 +553,3 @@ def parse_factor(ctx: UmamusumeContext):
             break
     ctx.cultivate_detail.parse_factor_done = True
     ctx.task.detail.cultivate_result['factor_list'] = factor_list
-
-
-def parse_umamusume_detail(ctx: UmamusumeContext):
-    ctx.cultivate_detail.turn_info.parse_condition_finish = True
-    print("成功进入parse")

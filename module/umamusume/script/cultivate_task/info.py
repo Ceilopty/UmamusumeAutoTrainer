@@ -10,7 +10,6 @@ from module.umamusume.asset.point import *
 from module.umamusume.asset.ui import INFO, CULTIVATE_MAIN_MENU
 from module.umamusume.context import UmamusumeContext
 import bot.base.log as logger
-from .cultivate import script_umamusume_detail
 
 log = logger.get_logger(__name__)
 
@@ -100,8 +99,6 @@ def script_info(ctx: UmamusumeContext):
         if title_text == TITLE[10]:
             ctx.ctrl.click_by_point(CULTIVATE_FINISH_CONFIRM_AGAIN)
         if title_text == TITLE[11]:
-            if ctx.prev_ui is CULTIVATE_MAIN_MENU:
-                script_umamusume_detail(ctx)
             ctx.ctrl.click_by_point(CULTIVATE_RESULT_CONFIRM)
         if title_text == TITLE[12]:
             ctx.ctrl.click_by_point(CULTIVATE_FAN_NOT_ENOUGH_RETURN)

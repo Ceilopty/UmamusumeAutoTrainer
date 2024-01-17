@@ -5,8 +5,6 @@ else:
     from .filepath import *
     from .klass import *
 
-NAME_MANAGER = None
-
 
 def deserialize(file_path: str) -> list | dict:
     import json
@@ -16,14 +14,7 @@ def deserialize(file_path: str) -> list | dict:
     return json.loads(js)
 
 
-def get_name_manager():
-    global NAME_MANAGER
-    if NAME_MANAGER is None:
-        NAME_MANAGER = NameManager(IdList(map(Name, deserialize(NAMES_FILEPATH)['$values'])))
-    return NAME_MANAGER
-
-
-def load():
+def _load():
     events = deserialize(EVENT_NAME_FILEPATH)
     success_events = deserialize(SUCCESS_EVENT_FILEPATH)
     names = deserialize(NAMES_FILEPATH)
@@ -48,7 +39,7 @@ def load():
     parsed_card = IdList(map(Card, card_data))
     parsed_support = IdList(map(SupportCard, support_card_data))
     text = TextData(text)
-
+    Skill.set_text(text)
     Chara.set_text(text)
     Card.set_chara(parsed_chara)
 
@@ -90,8 +81,58 @@ def get_info_filepath(t: str = 'T', turn: int = 0, event: int = 1) -> str:
 
 
 class NameManager:
-    def __init__(self, names):
-        self.names = names
+    self = None
+    data = None
 
-    def get_support(self, _id: int):
-        return self.names[_id]
+    def __new__(cls):
+        if not cls.self:
+            cls.self = object.__new__(cls)
+        return cls.self
+
+    def __init__(self):
+        if not self.data:
+            self.data = _load()
+
+    def get_support_by_id(self, _id: int) -> SupportCard | None:
+        try:
+            return self.data.support[_id]
+        except IndexError:
+            return
+
+    def get_chara_by_id(self, _id: int) -> Chara | None:
+        try:
+            return self.data.chara[_id]
+        except IndexError:
+            return
+
+    def get_skill_by_id(self, _id: int) -> Skill | None:
+        try:
+            return self.data.skills[_id]
+        except IndexError:
+            return
+
+    @staticmethod
+    def get_skill_group_by_id(_id: int) -> list | None:
+        try:
+            return Skill.get_groups_by_id(_id)
+        except KeyError | ValueError | TypeError:
+            return
+
+    def get_skill_group_by_id_and_rarity(self, _id: int, rarity: int,):
+        try:
+            return [skill for skill in self.data.skills if skill.group_id == _id and skill.rarity == rarity]
+        except  KeyError | ValueError | TypeError:
+            return
+
+    def get_event_name_by_id(self, _id: int) -> str:
+        try:
+            return self.data.text[181][_id]
+        except KeyError | ValueError | TypeError | IndexError:
+            return ''
+
+
+
+try:
+    NAME_MANAGER = NameManager()
+except FileNotFoundError:
+    NAME_MANAGER = None

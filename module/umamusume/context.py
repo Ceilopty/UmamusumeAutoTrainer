@@ -48,6 +48,8 @@ class TrainingInfo:
     intelligence_incr: int
     skill_point_incr: int
     vital_incr: int
+    failure_rate: int
+    train_level_count: int
 
     def __init__(self):
         self.speed_incr = 0
@@ -58,12 +60,14 @@ class TrainingInfo:
         self.skill_point_incr = 0
         self.support_card_info_list = []
         self.vital_incr = 0
+        self.failure_rate = 0
 
     def log_training_info(self):
-        log.info("训练结果：速度：%s, 耐力：%s, 力量：%s, 毅力：%s, 智力：%s, 技能点：%s, %s体力：%s", self.speed_incr,
+        log.info("训练结果：速度：%s, 耐力：%s, 力量：%s, 毅力：%s, 智力：%s, 技能点：%s, %s体力：%s, 失败率: %3d", self.speed_incr,
                  self.stamina_incr, self.power_incr, self.will_incr,
                  self.intelligence_incr, self.skill_point_incr,
-                 "消耗" if self.vital_incr < 0 else "回复" if self.vital_incr > 0 else "", abs(self.vital_incr))
+                 "消耗" if self.vital_incr < 0 else "回复" if self.vital_incr > 0 else "",
+                 abs(self.vital_incr), self.failure_rate)
         text = "此训练附带支援卡列表：["
         for c in self.support_card_info_list:
             if c.favor != SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_UNKNOWN:
@@ -90,8 +94,56 @@ class UmaAttribute:
         self.skill_point = 0
 
 
-class HintLevel:
-    pass
+class SkillHint:
+    group_id: int
+    rarity: int
+    level: int
+
+    def __init__(self, group_id=0, rarity=0, level=0, name=""):
+        self.group_id = group_id
+        self.rarity = rarity
+        self.level = level
+        self.name = name
+
+    def __str__(self):
+        return f"{self.name}{self.level}级"
+
+
+class LearntSkill:
+    skill_id: int
+    level: int
+    is_inherent: bool
+    name: str
+
+    def __init__(self, skill_id=0, level=1, is_inherent=False, name=""):
+        self.skill_id = skill_id
+        self.level = level
+        self.is_inherent = is_inherent
+        self.name = name
+
+    def __str__(self):
+        name = self.name or "技能"
+        return f"{name}@{self.skill_id} " + (f"等级{self.level:d}" if self.is_inherent else "")
+
+
+class UraInfo:
+    class LinkCardInfo:
+        first_click: bool
+        outgoing_unlocked: bool
+        outgoing_refused: bool
+        outgoing_used: int
+
+        def __init__(self):
+            self.first_click = False
+            self.outgoing_unlocked = False
+            self.outgoing_refused = False
+            self.outgoing_used = 0
+    ura_tsyInfo: LinkCardInfo
+    ura_lmInfo: LinkCardInfo
+
+    def __init__(self):
+        self.ura_tsyInfo = UraInfo.LinkCardInfo()
+        self.ura_lmInfo = UraInfo.LinkCardInfo()
 
 
 class TurnOperation:
@@ -129,9 +181,14 @@ class TurnInfo:
     turn_info_logged: bool
     turn_learn_skill_done: bool
 
-    uma_condition: list[Condition]
-    skill_hint: list[HintLevel]
-    parse_condition_finish: bool
+    uma_condition_list: list[Condition]
+    skill_hint_list: list[SkillHint]
+    learnt_skill_list: list[LearntSkill]
+    uma_attribute_limit_list: list[int]
+    max_vital: int
+    train_level_count_list: list[int]
+    ura_info: UraInfo
+    out_destination: int
 
     def __init__(self):
         self.date = -1
@@ -146,9 +203,14 @@ class TurnInfo:
         self.turn_operation = None
         self.turn_info_logged = False
         self.turn_learn_skill_done = False
-        self.uma_condition = []
-        self.skill_hint = []
-        self.parse_condition_finish = False
+        self.uma_condition_list = []
+        self.skill_hint_list = []
+        self.learnt_skill_list = []
+        self.uma_attribute_limit_list = [0, 0, 0, 0, 0]
+        self.max_vital = 100
+        self.train_level_count_list = [0, 0, 0, 0, 0]
+        self.ura_info = UraInfo()
+        self.out_destination = None
 
     def log_turn_info(self):
         log.info("当前回合时间 >" + str(self.date))
@@ -167,8 +229,12 @@ class TurnInfo:
         self.training_info_list[3].log_training_info()
         log.info("智力训练结果：")
         self.training_info_list[4].log_training_info()
-        log.debug("当前状态：" + ' '.join(map(str, self.uma_condition)))
-        log.debug("已获得技能启示：" + ' '.join(map(str, self.skill_hint)))
+        if self.uma_condition_list:
+            log.debug("当前状态：" + ' '.join(map(str, self.uma_condition_list)))
+        if len(self.learnt_skill_list) > 1:
+            log.debug("已获得技能启示：" + ' '.join(map(str, self.learnt_skill_list)))
+        if self.skill_hint_list:
+            log.debug("已获得技能启示：" + ' '.join(map(str, self.skill_hint_list)))
 
 
 class CultivateContextDetail:
@@ -196,6 +262,9 @@ class CultivateContextDetail:
     extra_weight: list
     umamusume: str | None
 
+    uma_id: int | None
+    card_id: list[int | None]
+
     def __init__(self):
         self.expect_attribute = None
         self.turn_info = TurnInfo()
@@ -215,6 +284,8 @@ class CultivateContextDetail:
         self.parse_factor_done = False
         self.extra_weight = []
         self.umamusume = None
+        self.umaId = None
+        self.card_id_list = []
 
     def reset_skill_learn(self):
         self.learn_skill_done = False

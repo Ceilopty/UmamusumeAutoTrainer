@@ -334,34 +334,6 @@ class Propers:
     __repr__ = __str__
 
 
-class Skill:
-    """技能"""
-    "47"
-    name: str
-
-    def __init__(self, skill: dict):
-        self.name = skill.get('Name')
-        self.id = skill.get('Id')
-        self.group_id = skill.get('GroupId')
-        self.rarity = skill.get('Rarity')
-        self.rate = skill.get('Rate')
-        self.grade = skill.get('Grade')
-        self.cost = skill.get('Cost')
-        self.display_order = skill.get('DisplayOrder')
-        self.upgrade = skill.get('Upgrade')
-        self.propers = list(map(Propers, skill.get('Propers')))
-        self.category = skill.get('Category')
-        self._skill_raw = skill.copy()
-
-    def __str__(self):
-        name = '  ' * (15 - len(self.name)) + self.name
-        return "%s@%s: %s" % (self.__class__.__name__,
-                              self.id,
-                              name)
-
-    __repr__ = __str__
-
-
 class UpgradeSkill:
     def __init__(self, upgrade_skill: dict):
         self.condition_id = upgrade_skill.get('ConditionId')
@@ -407,7 +379,11 @@ class _Nameable(_ABC):
     @property
     def name(self):
         """如果配置了text, 返回对应名称，否则返回空串"""
-        return self._text[self._name_index][self.id] if hasattr(self, '_text') else ''
+        try:
+            string = self._text[self._name_index][self.id] if hasattr(self, '_text') else ''
+        except KeyError:
+            string = ''
+        return string
 
     def __str__(self):
         return '%s: %s @ %4d' % (self.__class__.__name__,
@@ -593,3 +569,36 @@ class SupportCard(_CharaBase):
         self.support_card_type = SupportCardType(support.pop('support_card_type'))
         for key in support:
             setattr(self, key, support[key])
+
+
+class Skill(_Nameable):
+    """技能"""
+    _name_index = 47
+    name: str
+    _groups: _Dict[int, list] = {}
+
+    def __init__(self, skill: dict):
+        self._j_name = skill.get('Name')
+        self.id = skill.get('Id')
+        self.group_id = skill.get('GroupId')
+        self.rarity = skill.get('Rarity')
+        self.rate = skill.get('Rate')
+        self.grade = skill.get('Grade')
+        self.cost = skill.get('Cost')
+        self.display_order = skill.get('DisplayOrder')
+        self.upgrade = skill.get('Upgrade')
+        self.propers = list(map(Propers, skill.get('Propers')))
+        self.category = skill.get('Category')
+        self._skill_raw = skill.copy()
+        self._groups.setdefault(self.group_id, [])
+        self.group = self._groups[self.group_id]
+        if self not in self.group:
+            self.group.append(self)
+
+    @property
+    def name(self):
+        return super().name or self._j_name
+
+    @classmethod
+    def get_groups_by_id(cls, group_id):
+        return cls._groups[group_id].copy()

@@ -35,6 +35,7 @@ CHARA_DATA_FILEPATH = os.path.join(_CURRENT_JPN,
 CARD_DATA_FILEPATH = os.path.join(_CURRENT_JPN,
                                   "card_data.br")
 TEXT_DATA_FILEPATH = os.path.join(_CURRENT_CHN, "text_data.br")
+TEXT_J_DATA_FILEPATH = os.path.join(_CURRENT_JPN, "text_data.br")
 _GAME_DATA_FOLDER = os.path.join(_LOCALAPPDATA,
                                  "UmamusumeResponseAnalyzer",
                                  "GameData")
@@ -42,3 +43,18 @@ TURN_INFO_FOLDER = os.path.join(_GAME_DATA_FOLDER,
                                 "Turn")
 EVENT_INFO_FOLDER = os.path.join(_GAME_DATA_FOLDER,
                                  "Event")
+
+
+def get_info_filepath(t: str = 'T', turn: int = 0, event: int = 1) -> str:
+    if not len(t) == 1 and t in 'ET':
+        return ''
+    match t:
+        case 'E':
+            file = f'turn{turn}Event{event}.json' if turn else 'thisTurnThisEvent.json'
+            folder = EVENT_INFO_FOLDER
+        case 'T':
+            file = f'turn{turn}.json' if turn else 'thisTurn.json'
+            folder = TURN_INFO_FOLDER
+        case _:
+            return ''
+    return os.path.join(folder, file)

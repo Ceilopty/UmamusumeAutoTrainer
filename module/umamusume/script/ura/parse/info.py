@@ -69,6 +69,7 @@ class TurnInfo(Data):
     skillTips: Array[SkillTip]
     chara_effect_id_array: Array[ConditionType]
     available_command_array: Array[CommandType]
+    proper_info: Array[Array[int]]
 
 
 class OriginEventInfo(Data):
@@ -96,5 +97,5 @@ class EventInfo(Data):
     choices: Array[str]
     select_indices: Array[int]
     is_success: Array[EventState]
-    effect: Array[EventEffect]
+    effect: Array[EventEffects]
     eventInfo: OriginEventInfo

@@ -9,8 +9,12 @@ from module.umamusume.context import TurnInfo
 from module.umamusume.script.cultivate_task.const import SKILL_LEARN_PRIORITY_LIST
 from module.umamusume.script.cultivate_task.event import Event
 from module.umamusume.script.cultivate_task.parse import *
-from module.umamusume.script.ura.cultivate import ura_parse_cultivate_main_menu, ura_get_event_choice_by_effect
-
+try:
+    from module.umamusume.script.ura.cultivate import ura_parse_cultivate_main_menu, ura_get_event_choice_by_effect
+except ImportError:
+    def ura_get_event_choice_by_effect(ctx: UmamusumeContext):
+        return
+    ura_parse_cultivate_main_menu = parse_cultivate_main_menu
 log = logger.get_logger(__name__)
 
 
@@ -195,7 +199,7 @@ def script_cultivate_event(ctx: UmamusumeContext):
         event_name, selector_list = parse_cultivate_event(ctx, img)
         choice_index = ura_get_event_choice_by_effect(ctx) or Event(event_name)(ctx)
         # 意外情况容错
-        if choice_index - 1 > len(selector_list):
+        if choice_index > len(selector_list):
             choice_index = 1
         ctx.ctrl.click(selector_list[choice_index - 1][0], selector_list[choice_index - 1][1],
                        "事件选项-" + str(choice_index))
@@ -327,7 +331,24 @@ def script_cultivate_result(ctx: UmamusumeContext):
 
 # 1.878s 2s 0.649s
 def script_cultivate_catch_doll(ctx: UmamusumeContext):
-    ctx.ctrl.click_by_point(CULTIVATE_CATCH_DOLL_START)
+    """img = ctx.ctrl.get_screen()
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = img[240:480, 620:660]
+    title = ocr_line(img)
+    title1 = find_similar_text(title, ("滑动屏幕移动镜头",), 0.8)
+    if not title1:
+        log.warning("抓娃娃未开始 %s", title)
+        return"""
+    match ctx.cultivate_detail.catch_doll:
+        case 0:
+            ctx.ctrl.swipe(x1=365, y1=1117, x2=370, y2=1110, duration=1878, name="抓娃娃第一次")
+        case 1:
+            ctx.ctrl.swipe(x1=365, y1=1117, x2=370, y2=1110, duration=2000, name="抓娃娃第二次")
+        case 2:
+            ctx.ctrl.swipe(x1=365, y1=1117, x2=370, y2=1110, duration=649, name="抓娃娃第三次")
+        case _:
+            ctx.ctrl.click_by_point(CULTIVATE_CATCH_DOLL_START)
+    ctx.cultivate_detail.catch_doll += 1
 
 
 def script_cultivate_catch_doll_result(ctx: UmamusumeContext):

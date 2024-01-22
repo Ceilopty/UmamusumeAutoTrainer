@@ -19,7 +19,7 @@ EventEffect = namedtuple('EventEffect', ('motivation', 'vital', 'max_vital',
                                          'last_train', 'random_attr', 'train_lv', 'favor', 'fan', 'other'),
                          defaults=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                    (None, 0), None, None, None,
-                                   0, (0, 0), 0, 0, 0, None))
+                                   0, (0, 0), 0, (None, 0), 0, None))
 
 EventChoice = namedtuple('EventChoice', ('possibility', 'event_effect'),
                          defaults=(1, None))

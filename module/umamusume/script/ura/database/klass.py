@@ -34,6 +34,7 @@ class Color(int):
 
     def __str__(self):
         return '%X' % self
+
     __repr__ = __str__
 
 
@@ -180,6 +181,7 @@ class TextData(dict):
     268
     294 协助卡效果
     """
+
     def __init__(self, data: list):
         t = {}
         for datum in data:
@@ -191,6 +193,7 @@ class TextData(dict):
 
 class Effect:
     """事件效果，text_data 238"""
+
     def __init__(self, effect: str):
         self._effect_raw = effect
         self._effect_list_raw = effect.split('、')
@@ -269,16 +272,15 @@ class SuccessEvent:
 class Meta(type):
     _cls = {}
 
-    def __new__(cls, name, base, attrs, **kw):
-        attrs.update(kw)
-        if (args := (cls, name, base, str(attrs.keys()))) not in Meta._cls:
-            Meta._cls[args] = super().__new__(*args[:-1], attrs)
-        return Meta._cls[args]
+    def __new__(metacls, name, base, attrs):
+        if (args := (metacls, name, base, str(attrs.keys()))) not in metacls._cls:
+            metacls._cls[args] = super().__new__(*args[:-1], attrs)
+        return metacls._cls[args]
 
     def __call__(cls, *args, **kw):
         if kw:
             kw.update(cls.__dict__)
-            return Meta(cls.__name__, cls.__bases__, kw)
+            return type(cls)(cls.__name__, cls.__bases__, kw)
         return super().__call__(*args)
 
 
@@ -363,18 +365,24 @@ class TalentSkill(metaclass=Meta):
 class _Nameable(_ABC):
     """
     在text_data中有名字的类
-    类应当有index, 实例应当有id
+    类应当有_name_index, 实例应当有id
     若设置了text_data,
-    定义名称name为text_data[index][id]
+    定义名称name为text_data[_name_index][id]
     """
     id: int
     "master.mdb中的id"
+
     @_abm
     def _name_index(self):
         """text_data中的id或category"""
+
     @staticmethod
-    def set_text(text: TextData):
+    def set_text(text: dict):
         _Nameable._text = text
+
+    @staticmethod
+    def set_text_alter(text: dict):
+        _Nameable._text_alter = text
 
     @property
     def name(self):
@@ -385,9 +393,19 @@ class _Nameable(_ABC):
             string = ''
         return string
 
+    @property
+    def name_alter(self):
+        """如果配置了text_alter, 返回对应名称，否则返回空串"""
+        try:
+            string = self._text_alter[self._name_index][self.id] if hasattr(self, '_text_alter') else ''
+        except KeyError:
+            string = ''
+        return string
+
     def __str__(self):
         return '%s: %s @ %4d' % (self.__class__.__name__,
                                  self.name, self.id)
+
     __repr__ = __str__
 
 
@@ -471,13 +489,16 @@ class _CharaBase(_Nameable):
     应具有chara_id
     若设置了角色表，可根据id返回角色
     """
+
     @_abm
     def _name_index(self):
         """text_data中的id或category"""
+
     def chara_id(self):
         """master.mdb中的角色id"""
+
     @staticmethod
-    def set_chara(chara_list: IdList[Chara]):
+    def set_chara(chara_list: IdList[Chara] | _Dict[int, Chara]):
         _CharaBase._chara = chara_list
 
     @property
@@ -488,6 +509,7 @@ class _CharaBase(_Nameable):
     def __str__(self):
         return '%s: %s%s @ %d' % (self.__class__.__name__,
                                   self.name, self.chara.name, self.id)
+
     __repr__ = __str__
 
 
@@ -518,6 +540,7 @@ class Card(_CharaBase):
     "觉醒素材"
     running_style: StyleType
     "默认跑法"
+
     def __init__(self, card: dict):
         self._card = card.copy()
         self.limited_chara = bool(card.pop('limited_chara'))
@@ -531,16 +554,25 @@ class Card(_CharaBase):
             setattr(self, key, card[key])
 
 
-class SupportCardEffect:
+class SupportCardEffect(dict):
     """
     协助卡效果数据，来源为support_card_effect_table
+
+    # id: int
+    # "master.mdb中的id，第一位为稀有度"
+    # type: SupportCardEffectType
+    # "效果类型"
+    # limit: tuple[int]
+    # "从初始到50级每5级的效果数值，共11项"
     """
-    id: int
-    "master.mdb中的id，第一位为稀有度"
-    type: SupportCardEffectType
-    "效果类型"
-    limit: tuple[int]
-    "从初始到50级每5级的效果数值，共11项"
+    def __init__(self, effects: list[dict]):
+        super().__init__(())
+        for effect in effects:
+            self.setdefault(effect['id'], {})
+            self[effect['id']][effect['type']] = [effect['init']]
+            limit = self[effect['id']][effect['type']]
+            for lv in range(5, 51, 5):
+                limit.append(effect[f'limit_lv{lv}'])
 
 
 class SupportCardUniqueEffect:
@@ -555,6 +587,15 @@ class SupportCardUniqueEffect:
     lv: int
     "固有技能的发动等级"
     effect: _Dict[SupportCardEffectType, int]
+    "效果：SupportCardEffectType: 数值"
+
+    def __init__(self, effect: dict):
+        self.id = effect['id']
+        self.lv = effect['lv']
+        self.effect = {
+            effect['type_0']: effect['value_0'],
+            effect['type_1']: effect['value_1'],
+        }
 
 
 class SupportCard(_CharaBase):
@@ -571,11 +612,17 @@ class SupportCard(_CharaBase):
             setattr(self, key, support[key])
 
 
+class SupportCardChara(SupportCard):
+    _name_index = 77
+
+    def __init__(self, support: SupportCard):
+        super().__init__(support._support)
+
+
 class Skill(_Nameable):
     """技能"""
     _name_index = 47
     name: str
-    _groups: _Dict[int, list] = {}
 
     def __init__(self, skill: dict):
         self._j_name = skill.get('Name')
@@ -587,18 +634,244 @@ class Skill(_Nameable):
         self.cost = skill.get('Cost')
         self.display_order = skill.get('DisplayOrder')
         self.upgrade = skill.get('Upgrade')
-        self.propers = list(map(Propers, skill.get('Propers')))
+        self.propers = tuple(map(Propers, skill.get('Propers')))
         self.category = skill.get('Category')
         self._skill_raw = skill.copy()
-        self._groups.setdefault(self.group_id, [])
-        self.group = self._groups[self.group_id]
-        if self not in self.group:
-            self.group.append(self)
 
     @property
     def name(self):
         return super().name or self._j_name
 
+    @property
+    def name_alter(self):
+        return super().name_alter or self._j_name
+
+    @property
+    def j_name(self):
+        return self._j_name
+
+
+class NullableIntStringDictionary(dict):
+    def __getitem__(self, item):
+        if item in self:
+            return super().__getitem__(item)
+        else:
+            return "未知"
+
+
+class GradeRank:
+    id: int
+    min_value: int
+    "满足该评分所需的最低评价点"
+    max_value: int
+    "满足该评分所需的最高评价点"
+
+    @property
+    def rank(self):
+        return {
+            1: "[grey46]G[/]",
+            2: "[grey46]G+[/]",
+            3: "[mediumpurple3_1]F[/]",
+            4: "[mediumpurple3_1]F+[/]",
+            5: "[pink3]E[/]",
+            6: "[pink3]E+[/]",
+            7: "[deepskyblue3_1]D[/]",
+            8: "[deepskyblue3_1]D+[/]",
+            9: "[darkolivegreen3_1]C[/]",
+            10: "[darkolivegreen3_1]C+[/]",
+            11: "[palevioletred1]B[/]",
+            12: "[palevioletred1]B+[/]",
+            13: "[darkorange]A[/]",
+            14: "[darkorange]A+[/]",
+            15: "[lightgoldenrod2_2]S[/]",
+            16: "[lightgoldenrod2_2]S+[/]",
+            17: "[lightgoldenrod2_2]SS[/]",
+            18: "[lightgoldenrod2_2]SS+[/]",
+            19: "[mediumpurple1]U[mediumpurple2]G[/][/]",
+            20: "[mediumpurple1]U[mediumpurple2]G[/][purple_2]1[/][/]",
+            21: "[mediumpurple1]U[mediumpurple2]G[/][purple_2]2[/][/]",
+            22: "[mediumpurple1]U[mediumpurple2]G[/][purple_2]3[/][/]",
+            23: "[mediumpurple1]U[mediumpurple2]G[/][purple_2]4[/][/]",
+            24: "[mediumpurple1]U[mediumpurple2]G[/][purple_2]5[/][/]",
+            25: "[mediumpurple1]U[mediumpurple2]G[/][purple_2]6[/][/]",
+            26: "[mediumpurple1]U[mediumpurple2]G[/][purple_2]7[/][/]",
+            27: "[mediumpurple1]U[mediumpurple2]G[/][purple_2]8[/][/]",
+            28: "[mediumpurple1]U[mediumpurple2]G[/][purple_2]9[/][/]",
+            29: "[mediumpurple1]U[mediumpurple2]F[/][/]",
+            30: "[mediumpurple1]U[mediumpurple2]F[/][purple_2]1[/][/]",
+            31: "[mediumpurple1]U[mediumpurple2]F[/][purple_2]2[/][/]",
+            32: "[mediumpurple1]U[mediumpurple2]F[/][purple_2]3[/][/]",
+            33: "[mediumpurple1]U[mediumpurple2]F[/][purple_2]4[/][/]",
+            34: "[mediumpurple1]U[mediumpurple2]F[/][purple_2]5[/][/]",
+            35: "[mediumpurple1]U[mediumpurple2]F[/][purple_2]6[/][/]",
+            36: "[mediumpurple1]U[mediumpurple2]F[/][purple_2]7[/][/]",
+            37: "[mediumpurple1]U[mediumpurple2]F[/][purple_2]8[/][/]",
+            38: "[mediumpurple1]U[mediumpurple2]F[/][purple_2]9[/][/]",
+            39: "[mediumpurple1]U[mediumpurple2]E[/][/]",
+            40: "[mediumpurple1]U[mediumpurple2]E[/][purple_2]1[/][/]",
+            41: "[mediumpurple1]U[mediumpurple2]E[/][purple_2]2[/][/]",
+            42: "[mediumpurple1]U[mediumpurple2]E[/][purple_2]3[/][/]",
+            43: "[mediumpurple1]U[mediumpurple2]E[/][purple_2]4[/][/]",
+            44: "[mediumpurple1]U[mediumpurple2]E[/][purple_2]5[/][/]",
+            45: "[mediumpurple1]U[mediumpurple2]E[/][purple_2]6[/][/]",
+            46: "[mediumpurple1]U[mediumpurple2]E[/][purple_2]7[/][/]",
+            47: "[mediumpurple1]U[mediumpurple2]E[/][purple_2]8[/][/]",
+            48: "[mediumpurple1]U[mediumpurple2]E[/][purple_2]9[/][/]",
+            49: "[mediumpurple1]U[mediumpurple2]D[/][/]",
+            50: "[mediumpurple1]U[mediumpurple2]D[/][purple_2]1[/][/]",
+            51: "[mediumpurple1]U[mediumpurple2]D[/][purple_2]2[/][/]",
+            52: "[mediumpurple1]U[mediumpurple2]D[/][purple_2]3[/][/]",
+            53: "[mediumpurple1]U[mediumpurple2]D[/][purple_2]4[/][/]",
+            54: "[mediumpurple1]U[mediumpurple2]D[/][purple_2]5[/][/]",
+            55: "[mediumpurple1]U[mediumpurple2]D[/][purple_2]6[/][/]",
+            56: "[mediumpurple1]U[mediumpurple2]D[/][purple_2]7[/][/]",
+            57: "[mediumpurple1]U[mediumpurple2]D[/][purple_2]8[/][/]",
+            58: "[mediumpurple1]U[mediumpurple2]D[/][purple_2]9[/][/]",
+            59: "[mediumpurple1]U[mediumpurple2]C[/][/]",
+            60: "[mediumpurple1]U[mediumpurple2]C[/][purple_2]1[/][/]",
+            61: "[mediumpurple1]U[mediumpurple2]C[/][purple_2]2[/][/]",
+            62: "[mediumpurple1]U[mediumpurple2]C[/][purple_2]3[/][/]",
+            63: "[mediumpurple1]U[mediumpurple2]C[/][purple_2]4[/][/]",
+            64: "[mediumpurple1]U[mediumpurple2]C[/][purple_2]5[/][/]",
+            65: "[mediumpurple1]U[mediumpurple2]C[/][purple_2]6[/][/]",
+            66: "[mediumpurple1]U[mediumpurple2]C[/][purple_2]7[/][/]",
+            67: "[mediumpurple1]U[mediumpurple2]C[/][purple_2]8[/][/]",
+            68: "[mediumpurple1]U[mediumpurple2]C[/][purple_2]9[/][/]",
+            69: "[mediumpurple1]U[mediumpurple2]B[/][/]",
+            70: "[mediumpurple1]U[mediumpurple2]B[/][purple_2]1[/][/]",
+            71: "[mediumpurple1]U[mediumpurple2]B[/][purple_2]2[/][/]",
+            72: "[mediumpurple1]U[mediumpurple2]B[/][purple_2]3[/][/]",
+            73: "[mediumpurple1]U[mediumpurple2]B[/][purple_2]4[/][/]",
+            74: "[mediumpurple1]U[mediumpurple2]B[/][purple_2]5[/][/]",
+            75: "[mediumpurple1]U[mediumpurple2]B[/][purple_2]6[/][/]",
+            76: "[mediumpurple1]U[mediumpurple2]B[/][purple_2]7[/][/]",
+            77: "[mediumpurple1]U[mediumpurple2]B[/][purple_2]8[/][/]",
+            78: "[mediumpurple1]U[mediumpurple2]B[/][purple_2]9[/][/]",
+            79: "[mediumpurple1]U[mediumpurple2]A[/][/]",
+            80: "[mediumpurple1]U[mediumpurple2]A[/][purple_2]1[/][/]",
+            81: "[mediumpurple1]U[mediumpurple2]A[/][purple_2]2[/][/]",
+            82: "[mediumpurple1]U[mediumpurple2]A[/][purple_2]3[/][/]",
+            83: "[mediumpurple1]U[mediumpurple2]A[/][purple_2]4[/][/]",
+            84: "[mediumpurple1]U[mediumpurple2]A[/][purple_2]5[/][/]",
+            85: "[mediumpurple1]U[mediumpurple2]A[/][purple_2]6[/][/]",
+            86: "[mediumpurple1]U[mediumpurple2]A[/][purple_2]7[/][/]",
+            87: "[mediumpurple1]U[mediumpurple2]A[/][purple_2]8[/][/]",
+            88: "[mediumpurple1]U[mediumpurple2]A[/][purple_2]9[/][/]",
+            89: "[mediumpurple1]U[mediumpurple2]S[/][/]",
+            90: "[mediumpurple1]U[mediumpurple2]S[/][purple_2]1[/][/]",
+            91: "[mediumpurple1]U[mediumpurple2]S[/][purple_2]2[/][/]",
+            92: "[mediumpurple1]U[mediumpurple2]S[/][purple_2]3[/][/]",
+            93: "[mediumpurple1]U[mediumpurple2]S[/][purple_2]4[/][/]",
+            94: "[mediumpurple1]U[mediumpurple2]S[/][purple_2]5[/][/]",
+            95: "[mediumpurple1]U[mediumpurple2]S[/][purple_2]6[/][/]",
+            96: "[mediumpurple1]U[mediumpurple2]S[/][purple_2]7[/][/]",
+            97: "[mediumpurple1]U[mediumpurple2]S[/][purple_2]8[/][/]",
+            98: "[mediumpurple1]U[mediumpurple2]S[/][purple_2]9[/][/]",
+        }.get(self.id, "[mediumpurple1]US9[mediumpurple2]以上[/][/]")
+
+    def __init__(self, _id, min_value, max_value):
+        self.id = _id
+        self.min_value = min_value
+        self.max_value = max_value
+
     @classmethod
-    def get_groups_by_id(cls, group_id):
-        return cls._groups[group_id].copy()
+    def object_hook(cls, dct):
+        return cls(dct['id'], dct['min_value'], dct['max_value'])
+
+
+class BaseName:
+    id: int
+    "角色ID，通常为4位数字，且马娘均为1xxx"
+    name: str
+    "角色的本名，如美浦波旁"
+    nick_name: str = "未知"
+    "长度限定为2汉字的简称，如美浦波旁 = > 波旁"
+
+    def __init__(self, _id: int, _name: str):
+        self.id = _id
+        self.name = _name
+
+    @classmethod
+    def object_hook(cls, dct: dict):
+        self = cls(dct['Id'], dct['Name'])
+        if 'Nickname' in dct:
+            self.nick_name = dct['Nickname']
+        return self
+
+    def __str__(self):
+        if hasattr(self, 'full_name'):
+            return f"<{self.full_name} @ {self.id} aka {self.nick_name}>"
+        return f"{self.name} @ {self.id} aka {self.nick_name}"
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}: {str(self)}>"
+
+
+class SupportCardName(BaseName):
+    chara_id: int
+    "支援卡ID"
+    type: int
+    "支援卡的类型（速耐力根智友团）"
+
+    @property
+    def character_name(self) -> str:
+        """角色的本名，如美浦波旁"""
+        try:
+            database = eval('DataBase')
+        except NameError:
+            database = None
+        if database:
+            return database.Names[self.chara_id]
+        return ""
+
+    @property
+    def type_name(self):
+        """支援卡的类型(如[速])"""
+        return {101: "[速]", 102: "[力]", 103: "[根]", 105: "[耐]", 106: "[智]", 0: "[友]"}.get(self.type, '')
+
+    @property
+    def full_name(self):
+        """支援卡的全名，如[ミッション『心の栄養補給』] ミホノブルボン"""
+        return f"{self.name}{self.character_name}"
+
+    @property
+    def simple_name(self):
+        """支援卡的简称，如[智]波旁，不考虑同类型同马娘支援卡的区分"""
+        return f"{self.type_name}{self.nick_name}"
+
+    def __init__(self, _id: int, _name: str, _chara_id: int, _type: int):
+        super().__init__(_id, _name)
+        self.chara_id = _chara_id
+        self.type = _type
+
+    @classmethod
+    def object_hook(cls, dct: dict):
+        self = cls(dct['Id'], dct['Name'], dct['CharaId'], dct['Type'])
+        if 'Nickname' in dct:
+            self.nick_name = dct['Nickname']
+        return self
+
+
+class UmaName(BaseName):
+    chara_id: int
+    "马娘ID"
+    character_name = SupportCardName.character_name
+    full_name = SupportCardName.full_name
+    "马娘的全名，如[CODE：グラサージュ] ミホノブルボン"
+
+    def __init__(self, _id: int, _name: str, _chara_id: int = 0):
+        super().__init__(_id, _name)
+        if _chara_id == 0:
+            if (_strid := str(_id))[0] == '9':
+                self.chara_id = int(_strid[1:5])
+            else:
+                self.chara_id = int(_strid[:4])
+        else:
+            self.chara_id = _chara_id
+
+    @classmethod
+    def object_hook(cls, dct: dict):
+        self = cls(dct['Id'], dct['Name'], dct['CharaId'])
+        if 'Nickname' in dct:
+            self.nick_name = dct['Nickname']
+        return self

@@ -434,7 +434,7 @@ def find_skill(ctx: UmamusumeContext, img, skill: list[str], learn_any_skill: bo
     return find
 
 
-def get_skill_list(img, skill: list[str], skill_blacklist: list[str]) -> list:
+def get_skill_list(img, skill: list[list[str]], skill_blacklist: list[str]) -> list:
     origin_img = img
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     res = []

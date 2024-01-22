@@ -93,6 +93,9 @@ class UmaAttribute:
         self.intelligence = 0
         self.skill_point = 0
 
+    def to_tuple(self):
+        return self.speed, self.stamina, self.power, self.will, self.intelligence, self.skill_point
+
 
 class SkillHint:
     group_id: int
@@ -106,7 +109,7 @@ class SkillHint:
         self.name = name
 
     def __str__(self):
-        return f"{self.name}{self.level}级"
+        return f"{{{self.name}}}{self.level}级"
 
 
 class LearntSkill:
@@ -188,7 +191,9 @@ class TurnInfo:
     max_vital: int
     train_level_count_list: list[int]
     ura_info: UraInfo
-    out_destination: int
+    out_destination: int | None
+    sasami: bool
+    person_list: list[SupportCardInfo]
 
     def __init__(self):
         self.date = -1
@@ -211,6 +216,8 @@ class TurnInfo:
         self.train_level_count_list = [0, 0, 0, 0, 0]
         self.ura_info = UraInfo()
         self.out_destination = None
+        self.sasami = False
+        self.person_list = []
 
     def log_turn_info(self):
         log.info("当前回合时间 >" + str(self.date))
@@ -230,11 +237,11 @@ class TurnInfo:
         log.info("智力训练结果：")
         self.training_info_list[4].log_training_info()
         if self.uma_condition_list:
-            log.debug("当前状态：" + ' '.join(map(str, self.uma_condition_list)))
+            log.debug("当前状态：" + '，'.join(map(str, self.uma_condition_list)))
         if len(self.learnt_skill_list) > 1:
-            log.debug("已获得技能启示：" + ' '.join(map(str, self.learnt_skill_list)))
+            log.debug("已获得技能启示：" + '，'.join(map(str, self.learnt_skill_list)))
         if self.skill_hint_list:
-            log.debug("已获得技能启示：" + ' '.join(map(str, self.skill_hint_list)))
+            log.debug("已获得技能启示：" + '，'.join(map(str, self.skill_hint_list)))
 
 
 class CultivateContextDetail:
@@ -261,6 +268,7 @@ class CultivateContextDetail:
     parse_factor_done: bool
     extra_weight: list
     umamusume: str | None
+    catch_doll: int
 
     uma_id: int | None
     card_id: list[int | None]
@@ -286,6 +294,7 @@ class CultivateContextDetail:
         self.umamusume = None
         self.umaId = None
         self.card_id_list = []
+        self.catch_doll = 0
 
     def reset_skill_learn(self):
         self.learn_skill_done = False

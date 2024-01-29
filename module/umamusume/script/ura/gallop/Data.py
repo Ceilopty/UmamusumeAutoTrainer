@@ -17,6 +17,8 @@ class Data(metaclass=_DataMeta):
     包含基类的声明
     """
     def __init__(self, data):
+        if data is None:
+            return
         # 保留原始数据
         datacopy = data.copy() if hasattr(data, 'copy') else data
         setattr(self, self.__class__.__name__ + '_raw', datacopy)

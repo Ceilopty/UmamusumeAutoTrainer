@@ -70,6 +70,7 @@ class TurnInfo(Data):
     chara_effect_id_array: Array[ConditionType]
     available_command_array: Array[CommandType]
     proper_info: Array[Array[int]]
+    talent_level: int
 
 
 class OriginEventInfo(Data):

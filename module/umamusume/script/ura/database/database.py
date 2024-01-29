@@ -16,6 +16,7 @@ from .text_manager import TextManager
 from .klass import (NullableIntStringDictionary, Event, SuccessEvent, TalentSkill,
                     GradeRank, SupportCard, SupportCardChara, Chara, Card,
                     SupportCardEffect, SupportCardUniqueEffect)
+from .success_events import success_events
 
 __all__ = ["DataBase"]
 
@@ -215,6 +216,8 @@ class DataBase:
     "支援卡效果[id][effect_type]: [init, lv5, lv10, ... lv50]"
     support_card_unique_effect: Dict[int, SupportCardUniqueEffect]
     "支援卡固有效果"
+    success_events: Dict[int, Dict[str, list[list] | int]]
+    "在UAT的database中单独维护的不在URA中的需要手动记录的成功育成事件"
     __new__ = None
 
     @classmethod
@@ -228,7 +231,7 @@ class DataBase:
         cls.skills.default = SkillManager(cls._try_deserialize(SKILLS_FILEPATH,
                                                                SkillData))
         TalentSkill.skills = cls.skills.default
-        cls.talent_skill = {x[0]: list(map(TalentSkill, x[1]))
+        cls.talent_skill = {int(x[0]): list(map(TalentSkill, x[1]))
                             for x in cls._try_deserialize(TALENT_SKILL_FILEPATH).items()}
         cls.factor_ids.update((int(x[0]), x[1])
                               for x in cls._try_deserialize(FACTOR_IDS_FILEPATH).items())
@@ -244,10 +247,11 @@ class DataBase:
         cls.support_card_effect = SupportCardEffect(cls._try_deserialize(SUPPORT_CARD_EFFECT_TABLE_FILEPATH))
         cls.support_card_unique_effect = {x.id: x for x in cls._try_deserialize(SUPPORT_CARD_UNIQUE_EFFECT_FILEPATH,
                                                                                 SupportCardUniqueEffect)}
-        for kls in (Card, Chara, SupportCard, SupportCardChara, SkillData,):
-            kls.set_text(cls.text)
-            kls.set_text_alter(cls.text_alter)
+        Card.set_text(cls.text)
+        Card.set_text_alter(cls.text_alter)
         SupportCard.set_chara(cls.chara)
+
+        cls.success_events = success_events
 
     @classmethod
     def _try_deserialize(cls, path: str, func: FunctionType | type | None = None, **kw):

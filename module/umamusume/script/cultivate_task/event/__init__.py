@@ -13,7 +13,7 @@ USE_DEFAULT = True  # 使用默认选项 或者参考Context
 class Event:
     instances = {}
 
-    def __new__(cls, event_name: str, *args, **kw):
+    def __new__(cls, event_name: str, *args):
         if not args:  # Runtime
             event_name_normalized = find_similar_text(event_name, cls.event_map, 0.8)
             if event_name_normalized != "":
@@ -35,7 +35,7 @@ class Event:
                     self.handler = cls.event_map[event_name]
             return cls.instances[event_name]
 
-    def __init__(self, event_name: str, event: tuple = None, default: Union[int, None] = None, *args, **kw):
+    def __init__(self, event_name: str, event: tuple = None, default: Union[int, None] = None):
         if not event:
             return
         self.event_name = event_name
@@ -43,7 +43,7 @@ class Event:
         if not default:
             default = 1
         if USE_DEFAULT:
-            self.handler =default
+            self.handler = default
         self.register(self.event_name, self.handler)
 
     def __call__(self, ctx: UmamusumeContext):
@@ -68,7 +68,8 @@ class EventHolder:
     def __init__(self, module):
         self.name = module.__name__
         for event_name in dir(module):
-            if event_name.startswith('__'): continue
+            if event_name.startswith('__'):
+                continue
             setattr(self, event_name, Event(*getattr(module, event_name)))
             
     @classmethod
@@ -79,14 +80,17 @@ class EventHolder:
 
     @staticmethod
     def get_all(name):
-        import sys, os
+        import sys
+        import os
         path = os.path.split(sys.modules[name].__file__)[0]
-        return [os.path.splitext(file)[0]\
-                for file in os.listdir(path)\
-                if os.path.isfile(os.path.join(path, file)) and\
+        return [os.path.splitext(file)[0]
+                for file in os.listdir(path)
+                if os.path.isfile(os.path.join(path, file)) and
                 not file.startswith('_')]
 
 
+"""
 from . import scenario
 from . import chara
 from . import support
+"""

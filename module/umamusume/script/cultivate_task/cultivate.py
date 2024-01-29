@@ -11,10 +11,17 @@ from module.umamusume.script.cultivate_task.event import Event
 from module.umamusume.script.cultivate_task.parse import *
 try:
     from module.umamusume.script.ura.cultivate import ura_parse_cultivate_main_menu, ura_get_event_choice_by_effect
+    from module.umamusume.script.ura.skill_ai import ura_script_cultivate_learn_skill
 except ImportError:
     def ura_get_event_choice_by_effect(ctx: UmamusumeContext):
         return
     ura_parse_cultivate_main_menu = parse_cultivate_main_menu
+
+    def ura_script_cultivate_learn_skill(ctx: UmamusumeContext,
+                                         learn_skill_list: list[list[str]],
+                                         learn_skill_blacklist: list[str]):
+        raise ImportError
+    print("未找到URA相关组件")
 log = logger.get_logger(__name__)
 
 
@@ -386,6 +393,13 @@ def script_cultivate_learn_skill(ctx: UmamusumeContext):
             return
         else:
             learn_skill_list = ctx.cultivate_detail.learn_skill_list
+
+    try:
+        ura_script_cultivate_learn_skill(ctx, learn_skill_list, learn_skill_blacklist)
+    except (ImportError, Exception) as e:
+        print("出问题了", e)
+    else:
+        return
 
     # 遍历整页, 找出所有可点的技能
     skill_list = []

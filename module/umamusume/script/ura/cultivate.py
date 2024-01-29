@@ -1,11 +1,10 @@
-from module.umamusume.context import UmamusumeContext, SupportCardInfo, LearntSkill, SkillHint
+from module.umamusume.context import UmamusumeContext, Condition, SupportCardInfo, LearntSkill, SkillHint
 from module.umamusume.script.cultivate_task.parse import logger, parse_debut_race
-from module.umamusume.define import SupportCardType, MotivationLevel, TurnOperationType
+from module.umamusume.define import SupportCardType, MotivationLevel
 from module.umamusume.script.cultivate_task.event.event_ai import score_context, context_plus_effect, context_copy
 from .database import get_info_filepath, DataBase
 from .database.define import CommandType
 from .parse import TurnInfo, EventInfo, UraPerson, UraPersonType
-# from .parse.event_effect import EventEffects
 import json
 
 log = logger.get_logger(__name__)
@@ -23,6 +22,9 @@ def ura_parse_cultivate_main_menu(ctx: UmamusumeContext, img=None):
         log.warning("日期匹配失败，UAT日期%s, URA日期%s, 请核对！", uat_date, ura_date)
         # return  # 一般还是URA准确，所以继续
         ctx_info.date = convert_date(ura_date)
+    ctx.cultivate_detail.uma_rarity, ctx.cultivate_detail.uma_id = divmod(ura_info.umaId, 1000000)
+    ctx.cultivate_detail.card_id_list[:] = ura_info.cardId  # 前五位id，最后一位凸数
+    ctx.cultivate_detail.talent_level = ura_info.talent_level
     command_array = ura_info.available_command_array
     if CommandType.Race in command_array:
         ctx_info.race_available = True
@@ -44,11 +46,11 @@ def ura_parse_cultivate_main_menu(ctx: UmamusumeContext, img=None):
      ctx_info.uma_attribute.intelligence) = ura_info.fiveStatus
     ctx_info.uma_attribute.skill_point = ura_info.skillPt
     ctx_info.motivation_level = MotivationLevel(ura_info.motivation)
-    if img is not None:
-        parse_debut_race(ctx, img)
-    ctx_info.uma_condition_list[:] = ura_info.chara_effect_id_array
+    parse_debut_race(ctx, img)
+    ctx_info.uma_condition_list[:] = map(Condition, ura_info.chara_effect_id_array)
     ctx_info.max_vital = ura_info.maxVital
     ctx_info.uma_attribute_limit_list[:] = ura_info.fiveStatusLimit
+    ctx_info.proper_info[:] = ura_info.proper_info
     ctx_info.parse_main_menu_finish = True
     ura_parse_person_list(ctx, ura_info)
     ura_parse_training(ctx, ura_info)
@@ -132,6 +134,8 @@ def ura_parse_support_card(ctx: UmamusumeContext, info: TurnInfo):
 
 
 def ura_parse_skills(ctx: UmamusumeContext, info: TurnInfo):
+    learnt_skill_list = []
+    skill_hint_list = []
     for skill in info.skills:
         skill_id = skill.skill_id
         learnt = LearntSkill()
@@ -139,14 +143,16 @@ def ura_parse_skills(ctx: UmamusumeContext, info: TurnInfo):
         learnt.level = skill.level
         learnt.is_inherent = skill_id < 200000 or skill_id > 900000
         learnt.skill_id = skill_id
-        ctx.cultivate_detail.turn_info.learnt_skill_list.append(learnt)
+        learnt_skill_list.append(learnt)
     for tip in info.skillTips:
         hint = SkillHint()
         hint.group_id = tip.group_id
         hint.level = tip.level
         hint.rarity = tip.rarity
         hint.name = get_hint_name_by_id_and_rarity(hint.group_id, hint.rarity)
-        ctx.cultivate_detail.turn_info.skill_hint_list.append(hint)
+        skill_hint_list.append(hint)
+    ctx.cultivate_detail.turn_info.learnt_skill_list[:] = learnt_skill_list
+    ctx.cultivate_detail.turn_info.skill_hint_list[:] = skill_hint_list
 
 
 def get_skill_name_by_id(skill_id):
@@ -189,60 +195,9 @@ def ura_parse_person_list(ctx: UmamusumeContext, info: TurnInfo):
                             name=get_name_from_person_and_ids(person, info.cardId)))
 
 
-def update_vital_and_attribute(ctx: UmamusumeContext):
-    # 会不准确，但下回合就更新了，反正仅供事件决策
-    # 训练无视失败且属性超上限这些细节直接忽略，外出休息按最常见的算
-    turn = ctx.cultivate_detail.turn_info
-    if turn.date == -1:
-        ura_parse_cultivate_main_menu(ctx)
-    attribute = turn.uma_attribute
-    if not (operation := turn.turn_operation):
-        return
-    match operation.turn_operation_type:
-        case TurnOperationType.TURN_OPERATION_TYPE_TRAINING:
-            train = turn.turn_operation.training_type.value
-            if not train:
-                return
-            train_info = turn.training_info_list[train - 1]
-            attribute.speed += train_info.speed_incr
-            attribute.stamina += train_info.stamina_incr
-            attribute.power += train_info.power_incr
-            attribute.will += train_info.will_incr
-            attribute.intelligence += train_info.intelligence_incr
-            attribute.skill_point += train_info.skill_point_incr
-            turn.remain_stamina += train_info.vital_incr
-            turn.remain_stamina = max(0, turn.remain_stamina)
-            turn.remain_stamina = min(turn.max_vital, turn.remain_stamina)
-        case TurnOperationType.TURN_OPERATION_TYPE_MEDIC:
-            turn.remain_stamina = min(turn.max_vital, turn.remain_stamina + 20)
-        case TurnOperationType.TURN_OPERATION_TYPE_REST:
-            turn.remain_stamina = min(turn.max_vital, turn.remain_stamina + 50)
-        case TurnOperationType.TURN_OPERATION_TYPE_TRIP:
-            match turn.out_destination:
-                case 1 | 3:
-                    turn.motivation_level = MotivationLevel(min(5, turn.motivation_level.value + 1))
-                    turn.remain_stamina = min(turn.max_vital, turn.remain_stamina + 10)
-                case 2:
-                    turn.motivation_level = MotivationLevel(min(5, turn.motivation_level.value + 2))
-                case 4:
-                    turn.motivation_level = MotivationLevel(min(5, turn.motivation_level.value + 1))
-                    turn.remain_stamina = min(turn.max_vital, turn.remain_stamina + 40)
-                case _:
-                    return
-        case _:
-            return
-
-
 def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
-    # 先把假初始化的回合信息退回。当养成赛回合后出现事件会导致没有匹配主界面。
-    # 另一个解决方案是养成赛也parse一次，但由于URA目标赛事也不存数据所以没用。
-    # 还一种方法是把UAT目标赛事的更新回合给去了。
-    while ctx.cultivate_detail.turn_info.remain_stamina == -1:
-        if ctx.cultivate_detail.turn_info_history:
-            ctx.cultivate_detail.turn_info = ctx.cultivate_detail.turn_info_history.pop()
-        else:
-            break
-    update_vital_and_attribute(ctx)  # 根据本回合选择，更新体力和属性
+    ctx = context_copy(ctx)
+    ura_parse_basic_information(ctx)  # 更新当前信息
     try:
         with open(get_info_filepath('E'), 'rb') as f:
             info = EventInfo(json.load(f))
@@ -254,9 +209,20 @@ def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
             log.info("刺刺美事件确认确认")
             return 1
         ctx.cultivate_detail.turn_info.sasami = True
+    # 有些成功事件URA里没记录，干脆还是在UAT维护方便
+    if DataBase:
+        if info.story_id in DataBase.success_events:
+            from .parse.define import EventState
+            from .parse.event_effect import EventEffects
+            for i, choice in enumerate(DataBase.success_events[info.story_id]["Choices"]):
+                for select_index in choice:
+                    if info.select_indices[i] == select_index["SelectIndex"]:
+                        info.effect[i] = EventEffects(select_index["Effect"])
+                        info.is_success[i] = EventState(select_index["State"])
+                        break
     ura_log_event_effect(info)
     origin_ctx = ctx
-    ctx.cultivate_detail.turn_info.log_turn_info()
+    ctx.cultivate_detail.turn_info.log_turn_info(False)
     log.debug("计算初始得分：", )
     standard = score_context(ctx)
     score_of_choices = []
@@ -285,6 +251,7 @@ def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
     choice_indices = [index for index, score in enumerate(score_of_choices) if score == max_score]
     log.info("最佳选项及效果为: %s",
              " ".join(f"{info.choices[index]}: {info.effect[index]}" for index in choice_indices))
+    del ctx
     return score_of_choices.index(max_score) + 1
 
 
@@ -293,3 +260,31 @@ def ura_log_event_effect(info: EventInfo):
     log.info("找到事件%s from %s @%s", name, info.triggerName, info.story_id)
     for index, effect in enumerate(info.effect):
         log.info("选项%d：%s, 效果：%s", index + 1, info.choices[index], effect)
+
+
+def ura_parse_basic_information(ctx: UmamusumeContext):
+    """遇到事件或学技能时更新下基础信息"""
+    try:
+        with open(get_info_filepath(), 'rb') as f:
+            ura_info = TurnInfo(json.load(f))
+    except FileNotFoundError:
+        log.warning("未发现URA回合信息，无法更新。")
+        return
+    ctx_info = ctx.cultivate_detail.turn_info
+
+    ctx.cultivate_detail.uma_rarity, ctx.cultivate_detail.uma_id = divmod(ura_info.umaId, 1000000)
+    ctx.cultivate_detail.card_id_list[:] = ura_info.cardId  # 前五位id，最后一位凸数
+    ctx.cultivate_detail.talent_level = ura_info.talent_level
+    ctx_info.remain_stamina = ura_info.vital
+    (ctx_info.uma_attribute.speed,
+     ctx_info.uma_attribute.stamina,
+     ctx_info.uma_attribute.power,
+     ctx_info.uma_attribute.will,
+     ctx_info.uma_attribute.intelligence) = ura_info.fiveStatus
+    ctx_info.uma_attribute.skill_point = ura_info.skillPt
+    ctx_info.motivation_level = MotivationLevel(ura_info.motivation)
+    ctx_info.uma_condition_list[:] = map(Condition, ura_info.chara_effect_id_array)
+    ctx_info.max_vital = ura_info.maxVital
+    ctx_info.uma_attribute_limit_list[:] = ura_info.fiveStatusLimit
+    ctx_info.proper_info[:] = ura_info.proper_info
+    ura_parse_skills(ctx, ura_info)

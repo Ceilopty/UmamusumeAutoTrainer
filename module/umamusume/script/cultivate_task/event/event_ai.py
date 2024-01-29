@@ -76,7 +76,7 @@ def _condition(ctx: UmamusumeContext) -> float:
          24: '春待つ蕾', 25: 'ポジティブ思考', 26: '幸運体質', 100: "情熱ゾーン"}
     score = {1: -0.5, 2: -100, 3: -0.5, 4: -1,
              5: -1, 6: -0.5, 7: 0.8, 8: 2, 9: 0.5,
-             10: 0.3, 11: 0.6, 12: 0,
+             10: 0.1, 11: 0.2, 12: 0,
              13: 0, 14: 0, 15: 0,
              16: 0, 17: 0,
              18: 0, 19: 0, 20: 0,
@@ -152,7 +152,8 @@ def _skill(ctx: UmamusumeContext) -> float:
                 skill_score += (10 - level) / 10
                 break
         skill_score += (10 - 9) / 10
-    return hint_score * HINT_BASIC_POINT + skill_score * SKILL_BASIC_POINT
+    skill_point_score = ctx.cultivate_detail.turn_info.uma_attribute.skill_point * ATTRIBUTE_PREFERENCE[5]
+    return hint_score * HINT_BASIC_POINT + skill_score * SKILL_BASIC_POINT + skill_point_score * ATTRIBUTE_BASIC_POINT
 
 
 def _attribute(ctx: UmamusumeContext) -> float:

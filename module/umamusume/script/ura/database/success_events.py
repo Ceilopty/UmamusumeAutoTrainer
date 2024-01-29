@@ -1,0 +1,47 @@
+"""
+URA中未维护的成功育成事件信息，格式同success_events.br
+还有一些未改版事件，在这里还原一下。
+不再用json或brotli压缩了，直接使用字面值。
+"""
+
+
+success_events = {830029002: {"Id": 830029002,
+                              "Choices": [
+                                  [],
+                                  [
+                                      {
+                                          "SelectIndex": 1,
+                                          "Scenario": 0,
+                                          "State": 1,
+                                          "Effect": "体力+15、スタミナ+10、サトノダイヤモンドの絆ゲージ+5"
+                                      },
+                                      {
+                                          "SelectIndex": 2,
+                                          "Scenario": 0,
+                                          "State": 2,
+                                          "Effect": "やる気−1、根性+20"
+                                      }
+                                  ]
+                              ]
+                              },
+                  830029003: {"Id": 830029003,
+                              "Choices": [
+                                  [
+                                      {
+                                          "SelectIndex": 1,
+                                          "Scenario": 0,
+                                          "State": 1,
+                                          "Effect": "体力-20、スタミナ+30、「鋼の意志」のヒントLv+1、サトノダイヤモンドの絆ゲージ+5"
+                                      }
+                                  ],
+                                  [
+                                      {
+                                          "SelectIndex": 1,
+                                          "Scenario": 0,
+                                          "State": 1,
+                                          "Effect": "体力+5、根性+5、「鋼の意志」のヒントLv+1、サトノダイヤモンドの絆ゲージ+5"
+                                      }
+                                  ]
+                              ]
+                              },
+                  }

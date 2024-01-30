@@ -82,7 +82,8 @@ def _condition(ctx: UmamusumeContext) -> float:
              18: 0, 19: 0, 20: 0,
              21: 0, 22: 0, 23: 0,
              24: 0, 25: 0.5, 26: 0.5, 100: 0}
-    return CONDITION_BASIC_POINT * sum(score[x.value] for x in ctx.cultivate_detail.turn_info.uma_condition_list)
+    date = 1 - ctx.cultivate_detail.turn_info.date / 100
+    return CONDITION_BASIC_POINT * sum(score[x.value] for x in ctx.cultivate_detail.turn_info.uma_condition_list) * date
 
 
 def _motivation(ctx: UmamusumeContext) -> float:

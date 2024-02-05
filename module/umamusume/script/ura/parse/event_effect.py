@@ -314,7 +314,7 @@ def _parse_event_raw(effect: str) -> _Effect:
                 return _Effect(condition=_ConditionType(zt[condition]))
         else:
             if effect.endswith("】的Hint"):
-                return _Effect(skill=Skill(effect[3:-6]))
+                return _Effect(skill_hint=(Skill(effect[3:-6]), 1))
             if effect not in {
                 '获得随机技能Hint',
             }:
@@ -368,7 +368,7 @@ def _parse_event(effect: str) -> _Effect:
     return res
 
 
-def unique(cls: type) -> type:
+def unique(cls: type):
     old_new = cls.__new__
 
     def new_new(kls, *args, **kw):
@@ -656,7 +656,7 @@ class EventEffects:
         return normal or effect.skill_hint[0] or effect.random_attr[0]
 
     @staticmethod
-    def _effect_str(effect):
+    def effect_str(effect):
         d = {'motivation': "やる気%+d", 'vital': "体力%+d", 'max_vital': "体力の最大値%+d",
              'speed_incr': "スピード%+d", 'stamina_incr': "スタミナ%+d", 'power_incr': "パワー%+d",
              'guts_incr': "根性%+d", 'wiz_incr': "賢さ%+d", 'skill_point_incr': "スキルPt%+d",
@@ -683,7 +683,7 @@ class EventEffects:
 
     def __str__(self):
         try:
-            return os.linesep.join('、'.join(self._effect_str(effect)
+            return os.linesep.join('、'.join(self.effect_str(effect)
                                             for effect in possibility)
                                    for possibility in self._effect)
         except ValueError:

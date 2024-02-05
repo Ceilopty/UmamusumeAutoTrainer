@@ -372,7 +372,9 @@ def script_cultivate_finish(ctx: UmamusumeContext):
 
 def script_cultivate_learn_skill(ctx: UmamusumeContext):
     if ctx.cultivate_detail.learn_skill_done:
-        if ctx.cultivate_detail.learn_skill_selected:
+        "如果确定按钮点不动（G通道=130），就点返回"
+        img = cv2.cvtColor(ctx.current_screen, cv2.COLOR_BGR2RGB)[1080, 360][1]
+        if ctx.cultivate_detail.learn_skill_selected and img > 160:
             ctx.ctrl.click_by_point(CULTIVATE_LEARN_SKILL_CONFIRM)
         else:
             ctx.ctrl.click_by_point(RETURN_TO_CULTIVATE_FINISH)

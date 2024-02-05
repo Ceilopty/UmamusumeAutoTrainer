@@ -5,6 +5,7 @@ from module.umamusume.script.cultivate_task.event.event_ai import score_context,
 from .database import get_info_filepath, DataBase
 from .database.define import CommandType
 from .parse import TurnInfo, EventInfo, UraPerson, UraPersonType
+from .event_logger import EventLogger
 import json
 
 log = logger.get_logger(__name__)
@@ -56,6 +57,8 @@ def ura_parse_cultivate_main_menu(ctx: UmamusumeContext, img=None):
     ura_parse_training(ctx, ura_info)
     ura_parse_skills(ctx, ura_info)
     ura_parse_ura_info(ctx, ura_info)
+    # 检查是否需要log event effect
+    EventLogger.view(ctx)
 
 
 def convert_date(ura_date: int) -> int:
@@ -196,8 +199,6 @@ def ura_parse_person_list(ctx: UmamusumeContext, info: TurnInfo):
 
 
 def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
-    ctx = context_copy(ctx)
-    ura_parse_basic_information(ctx)  # 更新当前信息
     try:
         with open(get_info_filepath('E'), 'rb') as f:
             info = EventInfo(json.load(f))
@@ -209,6 +210,8 @@ def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
             log.info("刺刺美事件确认确认")
             return 1
         ctx.cultivate_detail.turn_info.sasami = True
+    ctx = context_copy(ctx)
+    ura_parse_basic_information(ctx)  # 更新当前信息
     # 有些成功事件URA里没记录，干脆还是在UAT维护方便
     if DataBase:
         if info.story_id in DataBase.success_events:
@@ -240,19 +243,32 @@ def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
             score_of_choices.append(sum(score_of_possible_effect) / len(score_of_possible_effect))
             log.debug("本选项额外得分：%.2f", score_of_choices[-1])
         else:
+            score_of_choices.append(0)
             log.warning("未发现效果 %s", effects_of_choice)
     max_score = max(score_of_choices)
     num = score_of_choices.count(max_score)
     if max_score == 0 or num == len(score_of_choices):
         log.warning("无效，退回原始方法")
+        # 贪一点，如果能测试未知事件就搞一下
+        for c, effects_of_choice in enumerate(info.effect):
+            if len(effects_of_choice.all_effects) > 1:
+                EventLogger.start(origin_ctx, info.triggerName, info.eventName, info.story_id, c, info.choices[c],
+                                  info.select_indices[c], info.is_success[c], info.effect[c], len(info.choices))
+                return c + 1
         return 0
     if num > 1:
         log.warning("有多项得分相同")
     choice_indices = [index for index, score in enumerate(score_of_choices) if score == max_score]
     log.info("最佳选项及效果为: %s",
              " ".join(f"{info.choices[index]}: {info.effect[index]}" for index in choice_indices))
-    del ctx
-    return score_of_choices.index(max_score) + 1
+    # 贪一点，如果能测试未知事件就搞一下
+    for c in choice_indices:
+        if len(info.effect[c].all_effects) > 1:
+            EventLogger.start(origin_ctx, info.triggerName, info.eventName, info.story_id, c, info.choices[c],
+                              info.select_indices[c], info.is_success[c], info.effect[c], len(info.choices))
+            return c + 1
+    else:
+        return choice_indices[0] + 1
 
 
 def ura_log_event_effect(info: EventInfo):
@@ -288,3 +304,5 @@ def ura_parse_basic_information(ctx: UmamusumeContext):
     ctx_info.uma_attribute_limit_list[:] = ura_info.fiveStatusLimit
     ctx_info.proper_info[:] = ura_info.proper_info
     ura_parse_skills(ctx, ura_info)
+    ura_parse_person_list(ctx, ura_info)
+    EventLogger.view(ctx)

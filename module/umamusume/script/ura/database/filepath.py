@@ -46,7 +46,7 @@ EVENT_INFO_FOLDER = os.path.join(_GAME_DATA_FOLDER,
 
 
 def get_info_filepath(t: str = 'T', turn: int = 0, event: int = 1) -> str:
-    if not len(t) == 1 and t in 'ET':
+    if not len(t) == 1 and t in 'ETS':
         return ''
     match t:
         case 'E':
@@ -55,6 +55,9 @@ def get_info_filepath(t: str = 'T', turn: int = 0, event: int = 1) -> str:
         case 'T':
             file = f'turn{turn}.json' if turn else 'thisTurn.json'
             folder = TURN_INFO_FOLDER
+        case 'S':
+            file = "TeamStadium.json"
+            folder = _GAME_DATA_FOLDER
         case _:
             return ''
     return os.path.join(folder, file)

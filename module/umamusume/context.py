@@ -276,6 +276,8 @@ class CultivateContextDetail:
     talent_level: int
     card_id_list: list[int]
     uma_rarity: int
+    no_tp: bool
+    borrowed: bool
 
     def __init__(self):
         self.expect_attribute = None
@@ -297,11 +299,12 @@ class CultivateContextDetail:
         self.extra_weight = []
         self.catch_doll = 0
         self.sasami = False
-        self.umamusume = None
         self.uma_id = 0
         self.talent_level = 0
         self.card_id_list = []
         self.uma_rarity = 0
+        self.no_tp = False
+        self.borrowed = False
 
     def reset_skill_learn(self):
         self.learn_skill_done = False

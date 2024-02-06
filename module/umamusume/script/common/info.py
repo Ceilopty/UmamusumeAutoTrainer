@@ -5,6 +5,7 @@ from module.umamusume.context import UmamusumeContext
 from module.umamusume.asset.point import (UI_INFO,
                                           NETWORK_ERROR_CONFIRM,
                                           UNLOCK_STORY_TO_HOME_PAGE,
+                                          UNLOCK_STORY_TO_HOME_PAGE2,
                                           ACTIVITY_STORY_UNLOCK_CONFIRM,
                                           ACTIVITY_STORY_UNLOCK_CONFIRM2,
                                           CLOSE_NEWS,
@@ -17,7 +18,9 @@ import bot.base.log as logger
 
 TITLE = {
     "网络错误": lambda ctx: ctx.ctrl.click_by_point(NETWORK_ERROR_CONFIRM),
-    "解锁角色剧情": lambda ctx: ctx.ctrl.click_by_point(UNLOCK_STORY_TO_HOME_PAGE),
+    "解锁角色剧情":
+        lambda ctx: ctx.ctrl.click_by_point(UNLOCK_STORY_TO_HOME_PAGE) or
+        ctx.ctrl.click_by_point(UNLOCK_STORY_TO_HOME_PAGE2),
     "活动剧情解锁":
         lambda ctx: ctx.ctrl.click_by_point(ACTIVITY_STORY_UNLOCK_CONFIRM) or
         ctx.ctrl.click_by_point(ACTIVITY_STORY_UNLOCK_CONFIRM2),

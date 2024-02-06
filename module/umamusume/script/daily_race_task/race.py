@@ -39,7 +39,8 @@ def script_daily_race_dr_home(ctx: UmamusumeContext):
         return
     race = [REF_DAILY_RACE_MOONLIGHT, REF_DAILY_RACE_JUPITER][ctx.daily_race_detail.race]
     difficulty = [REF_DAILY_RACE_EASY, REF_DAILY_RACE_NORMAL, REF_DAILY_RACE_HARD][ctx.daily_race_detail.difficulty]
-    while True:
+    retry = 3
+    while retry := retry - 1:
         match_result = image_match(ctx.ctrl.get_screen(True), race)
         if match_result.find_match:
             ctx.ctrl.click(*match_result.center_point, "选择比赛")
@@ -49,6 +50,7 @@ def script_daily_race_dr_home(ctx: UmamusumeContext):
             ctx.ctrl.click(*match_result.center_point, "选择难度")
             break
         ctx.ctrl.swipe(360, 960, 360, 600, 500, "滑")
+        time.sleep(0.5)
     time.sleep(0.5)
 
 

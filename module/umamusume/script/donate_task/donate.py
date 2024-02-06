@@ -11,8 +11,9 @@ from bot.base.task import TaskStatus, EndTaskReason
 from module.umamusume.task import EndTaskReason as UEndTaskReason
 from module.umamusume.context import UmamusumeContext, UmamusumeTaskType
 from module.umamusume.asset.template import (REF_DONATE_REQUESTS, REF_DONATE_ASKED, REF_DONATE_ASKED_CLOSED,
-                                             REF_DONATE_ASKED_INCOMPLETE, REF_DONATE_ASKING, REF_DONATE_ASK_CONFIRM,
-                                             BTN_DONATE_AVAILABLE, REF_DONATE_PLUS_UNAVAILABLE, REF_DONATE_UNAVAILABLE)
+                                             REF_DONATE_ASKED_TIMEOUT, REF_DONATE_ASKED_INCOMPLETE, REF_DONATE_ASKING,
+                                             REF_DONATE_ASK_CONFIRM, BTN_DONATE_AVAILABLE, REF_DONATE_PLUS_UNAVAILABLE,
+                                             REF_DONATE_UNAVAILABLE)
 from module.umamusume.asset.point import (DONATE_ASK_1, DONATE_ASK_2, DONATE_ASK_3, DONATE_ASK_4, DONATE_ASK_5,
                                           TO_GUILD, DONATE_TO_REQ_LIST, DONATE_TO_ASK, GO_HOME_FROM_GUILD,
                                           DONATE_COMMON_CONFIRM, DONATE_RETURN_FROM_REQ, DONATE_ASK_SELECTED,
@@ -63,25 +64,36 @@ def script_donate_requests(ctx: UmamusumeContext):
       若有灰色“捐赠”，则今日捐满，若找不到亮“捐赠”，认为没有可捐的了。
     2、点捐赠请求（要鞋），如果显示捐鞋未满8小时，设置为7.5小时前“已要”。
     3、点捐赠请求（要鞋），如果达上限已结束，设置为7.5小时前“已要”。
-    4、点捐赠请求（要鞋），如果显示剩余X小时，设置为X小时前“已要”。
-    5、正常进入选鞋界面，底部应有“请选择需求道具”，根据任务设置点击。
-    6、要鞋确认，底部会有“8小时内无法捐鞋”，点确定。
-    2-6都有对应ref，处理完再搞1
+    4、点捐赠请求（要鞋），如果显示时间已到，设置为8小时前“已要”。
+    5、点捐赠请求（要鞋），如果显示剩余X小时，设置为X小时前“已要”。
+    6、正常进入选鞋界面，底部应有“请选择需求道具”，根据任务设置点击。
+    7、要鞋确认，底部会有“8小时内无法捐鞋”，点确定。
+    2-7都有对应ref，处理完再搞1
     目前懒得做指定捐鞋，能捐统统捐
     """
-    # 情况2：已要，已满 情况3：刚满
+    # 情况2：已要，已满
     img = cv2.cvtColor(ctx.current_screen, cv2.COLOR_BGR2GRAY)
-    if image_match(img, REF_DONATE_ASKED).find_match or image_match(img, REF_DONATE_ASKED_CLOSED).find_match:
+    if image_match(img, REF_DONATE_ASKED).find_match:
         set_timestamp(ctx, 'asked', -3600*7.5)
         ctx.ctrl.click_by_point(DONATE_COMMON_CONFIRM)
         return
+    # 情况3：已要，刚满
+    if image_match(img, REF_DONATE_ASKED_CLOSED).find_match:
+        set_timestamp(ctx, 'asked', -3600*7.5)
+        ctx.ctrl.click_by_point(DONATE_RETURN_FROM_REQ)
+        return
+    # 情况4：已要，超时
+    if image_match(img, REF_DONATE_ASKED_TIMEOUT).find_match:
+        set_timestamp(ctx, 'asked', -3600 * 8)
+        ctx.ctrl.click_by_point(DONATE_RETURN_FROM_REQ)
+        return
     # 情况4：已要，未满，解析剩余时间
     if image_match(img, REF_DONATE_ASKED_INCOMPLETE).find_match:
-        # 没遇到过那么久还没捐满的情况
         offset = re.sub("\\D", "", ocr_line(img[1090:1120, 435:460]))
         offset = 3600*(int(offset)-8) if offset else None
         set_timestamp(ctx, 'asked', offset)
         ctx.ctrl.click_by_point(DONATE_RETURN_FROM_REQ)
+        return
     # 情况5：选鞋 doublecheck
     if image_match(img, REF_DONATE_ASKING).find_match:
         index = ctx.donate_detail.ask_shoe_type or random.randint(1, 5)

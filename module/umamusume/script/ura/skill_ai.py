@@ -9,6 +9,7 @@ log = logger.get_logger(__name__)
 
 DEBUG = True
 
+
 def ura_script_cultivate_learn_skill(ctx: UmamusumeContext,
                                      learn_skill_list: list[list[str]],
                                      learn_skill_blacklist: list[str]
@@ -152,10 +153,13 @@ def find_skill(ctx: UmamusumeContext, img, skill: list[str], learn_any_skill: bo
                 skill_info_img = img[pos[0][1] - 65:pos[1][1] + 75, pos[0][0] - 470: pos[1][0] + 150]
                 if not image_match(skill_info_img, REF_SKILL_LEARNED).find_match:
                     skill_name_img = skill_info_img[10: 47, 100: 445]
-                    text = ocr_line(skill_name_img).replace("曙", '踌躇').replace("凌房XDRIVE!", '凌厉×DRIVE！')  # 不知道咋搞，只能这样了
+                    org_text = ocr_line(skill_name_img)
+                    text = org_text.replace("曙", '踌躇').replace("凌房XDRIVE!", '凌厉×DRIVE！')  # 不知道咋搞，只能这样了
+                    if text in ("领跑", "跟前", "居中", "后追"):
+                        text += '踌躇'
                     result = find_similar_text(text, skill, 0.7)
                     if DEBUG:
-                        print(text + "->" + result)  # DEBUG
+                        print(org_text + "->" + text + "->" + result)  # DEBUG
                     if result != "" or learn_any_skill:
                         tmp_img = ctx.ctrl.get_screen()
                         pt_text = re.sub("\\D", "", ocr_line(tmp_img[400: 440, 490: 665]))

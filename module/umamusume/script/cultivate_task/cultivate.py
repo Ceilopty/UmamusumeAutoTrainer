@@ -4,6 +4,7 @@ import time
 import numpy as np
 
 from bot.base.task import TaskStatus, EndTaskReason
+from module.umamusume.task import EndTaskReason as UEndTaskReason
 from module.umamusume.asset.point import *
 from module.umamusume.context import TurnInfo
 from module.umamusume.script.cultivate_task.const import SKILL_LEARN_PRIORITY_LIST
@@ -147,22 +148,48 @@ def script_main_menu(ctx: UmamusumeContext):
     if ctx.cultivate_detail.cultivate_finish:
         ctx.task.end_task(TaskStatus.TASK_STATUS_SUCCESS, EndTaskReason.COMPLETE)
         return
+    if ctx.cultivate_detail.no_tp or (time.time() - ctx.task.detail.
+       timestamp['no_tp'].get(ctx.task.device_name or "default", 0) < 300):
+        ctx.task.end_task(TaskStatus.TASK_STATUS_FAILED, UEndTaskReason.TP_NOT_ENOUGH)
+        return
+    if ts := ctx.task.detail.timestamp['borrowed'].get(ctx.task.device_name or "default", 0):
+        import croniter
+        if time.time() < croniter.croniter("0 5 * * *", ts).get_next():
+            ctx.task.end_task(TaskStatus.TASK_STATUS_FAILED, UEndTaskReason.BORROWED)
+            return
     ctx.ctrl.click_by_point(TO_CULTIVATE_SCENARIO_CHOOSE)
 
 
 def script_scenario_select(ctx: UmamusumeContext):
+    if ctx.cultivate_detail.no_tp or ctx.cultivate_detail.borrowed:
+        ctx.ctrl.click(360, 1220, "返回主界面")
+        return
     ctx.ctrl.click_by_point(TO_CULTIVATE_PREPARE_NEXT)
 
 
 def script_umamusume_select(ctx: UmamusumeContext):
+    if ctx.cultivate_detail.no_tp or ctx.cultivate_detail.borrowed:
+        ctx.ctrl.click(360, 1220, "返回主界面")
+        return
     ctx.ctrl.click_by_point(TO_CULTIVATE_PREPARE_NEXT)
 
 
 def script_extend_umamusume_select(ctx: UmamusumeContext):
+    if ctx.cultivate_detail.no_tp or ctx.cultivate_detail.borrowed:
+        ctx.ctrl.click(360, 1220, "返回主界面")
+        return
+    img = ctx.ctrl.get_screen(to_gray=True)
+    if image_match(img, REF_CULTIVATE_SUPPORT_CARD_EMPTY).find_match:
+        ctx.cultivate_detail.borrowed = True
+        ctx.task.detail.timestamp['borrowed'][ctx.task.device_name or "default"] = time.time()
+        return
     ctx.ctrl.click_by_point(TO_CULTIVATE_PREPARE_NEXT)
 
 
 def script_support_card_select(ctx: UmamusumeContext):
+    if ctx.cultivate_detail.no_tp:
+        ctx.ctrl.click(360, 1220, "返回主界面")
+        return
     img = ctx.ctrl.get_screen(to_gray=True)
     if image_match(img, REF_CULTIVATE_SUPPORT_CARD_EMPTY).find_match:
         ctx.ctrl.click_by_point(TO_FOLLOW_SUPPORT_CARD_SELECT)

@@ -1,5 +1,5 @@
 import time
-
+from datetime import datetime as dt
 import cv2
 
 from bot.base.task import TaskStatus, EndTaskReason
@@ -132,6 +132,7 @@ def script_info(ctx: UmamusumeContext):
             ctx.ctrl.click_by_point(RECEIVE_GIFT_SUCCESS_CLOSE)
         if title_text == TITLE[23]:
             ctx.ctrl.click_by_point(UNLOCK_STORY_TO_HOME_PAGE)
+            ctx.ctrl.click_by_point(UNLOCK_STORY_TO_HOME_PAGE2)
         if title_text == TITLE[24]:
             ctx.ctrl.click_by_point(WIN_TIMES_NOT_ENOUGH_RETURN)
         if title_text == TITLE[25]:
@@ -142,7 +143,9 @@ def script_info(ctx: UmamusumeContext):
                     ctx.cultivate_detail.allow_recover_tp_diamond:
                 ctx.ctrl.click_by_point(TO_RECOVER_TP)
             else:
-                ctx.task.end_task(TaskStatus.TASK_STATUS_FAILED, UEndTaskReason.TP_NOT_ENOUGH)
+                ctx.cultivate_detail.no_tp = True
+                ctx.task.detail.timestamp['no_tp'][ctx.task.device_name or "default"] = dt.now().timestamp()
+                ctx.ctrl.click(200, 830, "取消回复训练值")
         if title_text == TITLE[27]:
             if image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_1).find_match:
                 if ctx.cultivate_detail.allow_recover_tp_drink:

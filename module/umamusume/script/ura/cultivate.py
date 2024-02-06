@@ -1,3 +1,6 @@
+import os.path
+import time
+
 from module.umamusume.context import UmamusumeContext, Condition, SupportCardInfo, LearntSkill, SkillHint
 from module.umamusume.script.cultivate_task.parse import logger, parse_debut_race
 from module.umamusume.define import SupportCardType, MotivationLevel
@@ -10,9 +13,16 @@ import json
 
 log = logger.get_logger(__name__)
 
+TIMEOUT = 60
+
 
 def ura_parse_cultivate_main_menu(ctx: UmamusumeContext, img=None):
     try:
+        if (now := time.time()) - (file := os.path.getmtime(get_info_filepath())) > TIMEOUT:
+            log.warning("超时, 当前时间：%s，文件时间：%s",
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(now)),
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file)))
+            return
         with open(get_info_filepath(), 'rb') as f:
             ura_info = TurnInfo(json.load(f))
     except FileNotFoundError:
@@ -201,16 +211,21 @@ def ura_parse_person_list(ctx: UmamusumeContext, info: TurnInfo):
 
 def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
     try:
+        if (now := time.time()) - (file := os.path.getmtime(get_info_filepath('E'))) > TIMEOUT:
+            log.warning("超时, 当前时间：%s，文件时间：%s",
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(now)),
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file)))
+            return 0
         with open(get_info_filepath('E'), 'rb') as f:
             info = EventInfo(json.load(f))
     except FileNotFoundError:
         log.warning("未发现URA事件信息，使用原始方法。")
         return 0
     if info.story_id % 1000 == 720:
-        if ctx.cultivate_detail.turn_info.sasami:
+        if ctx.cultivate_detail.sasami:
             log.info("刺刺美事件确认确认")
             return 1
-        ctx.cultivate_detail.turn_info.sasami = True
+        ctx.cultivate_detail.sasami = True
     ctx = context_copy(ctx)
     ura_parse_basic_information(ctx)  # 更新当前信息
     # 有些成功事件URA里没记录，干脆还是在UAT维护方便
@@ -247,17 +262,7 @@ def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
             score_of_choices.append(0)
             log.warning("未发现效果 %s", effects_of_choice)
     max_score = max(score_of_choices)
-    num = score_of_choices.count(max_score)
-    if max_score == 0 or num == len(score_of_choices):
-        log.warning("无效，退回原始方法")
-        # 贪一点，如果能测试未知事件就搞一下
-        for c, effects_of_choice in enumerate(info.effect):
-            if len(effects_of_choice.all_effects) > 1:
-                EventLogger.start(origin_ctx, info.triggerName, info.eventName, info.story_id, c, info.choices[c],
-                                  info.select_indices[c], info.is_success[c], info.effect[c], len(info.choices))
-                return c + 1
-        return 0
-    if num > 1:
+    if score_of_choices.count(max_score) > 1:
         log.warning("有多项得分相同")
     choice_indices = [index for index, score in enumerate(score_of_choices) if score == max_score]
     log.info("最佳选项及效果为: %s",

@@ -91,10 +91,12 @@ def script_team_stadium_results(ctx: UmamusumeContext):
 
 
 def script_team_stadium_reward(ctx: UmamusumeContext):
+    ctx.team_stadium_detail.raced = True
     ctx.ctrl.click_by_point(TEAM_STADIUM_CLAIM_REWARDS)
 
 
 def script_team_stadium_before_reward(ctx: UmamusumeContext):
+    ctx.team_stadium_detail.raced = True
     ctx.ctrl.click_by_point(TEAM_STADIUM_CHECK_RESULTS)
 
 

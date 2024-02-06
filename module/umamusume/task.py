@@ -33,6 +33,8 @@ class TaskDetail:
     not_found_ui = 0
 
     timestamp = {
+        'borrowed': {},
+        'no_tp': {},
         'no_rp': {},
         'donated': {},
         'asked': {},
@@ -49,6 +51,7 @@ class EndTaskReason(Enum):
     OFF = "统计中"
     NO_REQUESTS = "没人要鞋"
     DAILY_RACED = "日常赛事次数用尽"
+    BORROWED = "已无借用次数"
 
 
 class UmamusumeTask(Task):

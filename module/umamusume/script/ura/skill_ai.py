@@ -8,6 +8,7 @@ import bot.base.log as logger
 log = logger.get_logger(__name__)
 
 DEBUG = True
+MAX_RETRY = 30
 
 
 def ura_script_cultivate_learn_skill(ctx: UmamusumeContext,
@@ -24,27 +25,39 @@ def ura_script_cultivate_learn_skill(ctx: UmamusumeContext,
     learn = parse_skill_tips_response(ctx,
                                       normalize_priority_and_blacklist(learn_skill_list),
                                       normalize_priority_and_blacklist(learn_skill_blacklist))
+    learnt_id = [x.skill_id for x in ctx.cultivate_detail.turn_info.learnt_skill_list]
     for skill in learn:
-        if "◎" in skill.name:
-            target_skill_list.append(skill.name[:-1] + "○")
-        target_skill_list.append(skill.name)
+        if skill.rate == 2 and skill.rarity == 1:  # "◎" skills or inherent skills
+            if skill.inferior is not None and skill.inferior.id not in learnt_id:  # "○" unlearn
+                if skill.inferior.inferior is not None and skill.inferior.inferior.id in learnt_id:  # got "×"
+                    target_skill_list.append(skill.inferior.inferior.name_while_learning)
+                target_skill_list.append(skill.inferior.name_while_learning)
+        if skill.rate == 1 and skill.rarity == 1:  # "○" and normal skills:
+            if skill.inferior is not None and skill.inferior.id in learnt_id:  # got "×"
+                target_skill_list.append(skill.inferior.name_while_learning)
+        target_skill_list.append(skill.name_while_learning)
 
     # 点技能
     import time
     retry = 0
     while True:
         img = ctx.ctrl.get_screen()
-        find_skill(origin_ctx, img, target_skill_list, learn_any_skill=False)
+        found = find_skill(origin_ctx, img, target_skill_list, learn_any_skill=False)
         if len(target_skill_list) == 0:
             break
+        if found:  # 针对一个技能点多次的情况，找到并点到了先不翻页
+            continue
         retry += 1
-        if retry > 20:
+        if retry > MAX_RETRY:
             log.warning(f"以下技能没找到: %s", target_skill_list)
             if DEBUG:
                 raise
             else:
                 break
-        ctx.ctrl.swipe(x1=23, y1=1000, x2=23, y2=636, duration=1000, name="")
+        if retry * 2 < MAX_RETRY:
+            ctx.ctrl.swipe(x1=23, y1=1000, x2=23, y2=636, duration=1000, name="")
+        else:
+            ctx.ctrl.swipe(x1=23, y1=636, x2=23, y2=1000, duration=1000, name="")
         time.sleep(1)
 
     origin_ctx.cultivate_detail.learn_skill_done = True

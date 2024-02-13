@@ -69,4 +69,23 @@ success_events = {830029002: {"Id": 830029002,
                                   ]
                               ]
                               },
+                  820017001: {'Id': 820017001,
+                              'Choices': [
+                                  [],
+                                  [
+                                      {
+                                          'SelectIndex': 1,
+                                          'Scenario': 0,
+                                          'State': 1,
+                                          'Effect': '体力の最大値+4、やる気+1、根性+5、賢さ+5、名将怒涛の絆ゲージ+5'
+                                      },
+                                      {
+                                          'SelectIndex': 2,
+                                          'Scenario': 0,
+                                          'State': 0,
+                                          'Effect': '体力-10、賢さ+5'
+                                      }
+                                  ]
+                              ]
+                              },
                   }

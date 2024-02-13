@@ -196,6 +196,7 @@ class TurnInfo:
     out_destination: int | None
     person_list: list[SupportCardInfo]
     proper_info: list[list[int]]
+    racing: bool
 
     def __init__(self):
         self.date = -1
@@ -221,6 +222,7 @@ class TurnInfo:
         self.out_destination = None
         self.person_list = []
         self.proper_info = [[0, 0], [0, 0, 0, 0,], [0, 0, 0, 0]]
+        self.racing = False
 
     def log_turn_info(self, full=True, show_skill_and_hint=False):
         log.info("当前回合时间 >" + str(self.date))
@@ -260,6 +262,7 @@ class CultivateContextDetail:
     learn_skill_blacklist: list[str]
     learn_skill_done: bool
     learn_skill_selected: bool
+    learn_skill_before_race_done: bool
     cultivate_finish: bool
     tactic_list: list[int]
     debut_race_win: bool
@@ -290,6 +293,7 @@ class CultivateContextDetail:
         self.learn_skill_blacklist = []
         self.learn_skill_done = False
         self.learn_skill_selected = False
+        self.learn_skill_before_race_done = False
         self.cultivate_finish = False
         self.tactic_list = []
         self.debut_race_win = False
@@ -404,6 +408,7 @@ def build_context(task: UmamusumeTask, ctrl) -> UmamusumeContext:
             detail.clock_use_limit = task.detail.clock_use_limit
             detail.learn_skill_threshold = task.detail.learn_skill_threshold
             detail.learn_skill_only_user_provided = task.detail.learn_skill_only_user_provided
+            detail.learn_skill_before_race = task.detail.learn_skill_before_race
             detail.allow_recover_tp_drink = task.detail.allow_recover_tp_drink
             detail.allow_recover_tp_diamond = task.detail.allow_recover_tp_diamond
             detail.extra_weight = task.detail.extra_weight

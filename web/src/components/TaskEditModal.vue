@@ -323,8 +323,8 @@
                   </div>
                   <div class="col-3">
                     <div class="form-group">
-                      <label for="learnSkillBeforeRaceSelector">在参赛前学习技能</label>
-                      <select disabled v-model="learnSkillBeforeRace" class="form-control" id="learnSkillBeforeRace">
+                      <label for="learnSkillBeforeRaceSelector">在参赛前学习技能(请写在第一优先级)</label>
+                      <select v-model="learnSkillBeforeRace" class="form-control" id="learnSkillBeforeRace">
                         <option :value=true>是</option>
                         <option :value=false>否</option>
                       </select>
@@ -951,6 +951,7 @@ export default {
           "allow_recover_tp_drink": this.recoverTPDrink,
           "allow_recover_tp_diamond": this.recoverTPDiamond,
           "learn_skill_only_user_provided": this.learnSkillOnlyUserProvided,
+          "learn_skill_before_race": this.learnSkillBeforeRace,
           "extra_weight": [this.extraWeight1, this.extraWeight2, this.extraWeight3]
         }
       }

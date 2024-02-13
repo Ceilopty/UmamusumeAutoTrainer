@@ -168,6 +168,17 @@ def ura_parse_skills(ctx: UmamusumeContext, info: TurnInfo):
     ctx.cultivate_detail.turn_info.skill_hint_list[:] = skill_hint_list
     ctx.cultivate_detail.turn_info.disable_skill_id_array[:] = info.disable_skill_id_array
 
+    before_race_learnt = True
+    for need_learn in (DataBase.get_skill_by_name(need_learn)
+                       for level in ctx.cultivate_detail.learn_skill_list[0:1]
+                       for need_learn in level):
+        if (need_learn is not None and
+           [x for x in skill_hint_list if x.group_id == need_learn.group_id and x.rarity == need_learn.rarity] and
+           not [x for x in learnt_skill_list if x.skill_id == need_learn.id]):
+            before_race_learnt = False
+            break
+    ctx.cultivate_detail.learn_skill_before_race_done = before_race_learnt
+
 
 def get_skill_name_by_id(skill_id):
     return DataBase.get_skill_by_id(skill_id).name if DataBase else ""

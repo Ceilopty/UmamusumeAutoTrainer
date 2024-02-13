@@ -15,6 +15,7 @@ class TaskDetail:
     clock_use_limit: int
     learn_skill_threshold: int
     learn_skill_only_user_provided: bool
+    learn_skill_before_race: bool
     allow_recover_tp_drink: bool
     allow_recover_tp_diamond: bool
     cultivate_progress_info: dict
@@ -93,6 +94,7 @@ def build_task(task_execute_mode: TaskExecuteMode, task_type: int,
         td.clock_use_limit = attachment_data['clock_use_limit']
         td.learn_skill_threshold = attachment_data['learn_skill_threshold']
         td.learn_skill_only_user_provided = attachment_data['learn_skill_only_user_provided']
+        td.learn_skill_before_race = attachment_data['learn_skill_before_race']
         td.allow_recover_tp_drink = attachment_data['allow_recover_tp_drink']
         td.allow_recover_tp_diamond = attachment_data['allow_recover_tp_diamond']
         td.extra_weight = attachment_data['extra_weight']

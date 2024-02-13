@@ -229,6 +229,7 @@ class SkillManagerGenerator:
         """
         抄的URA的Handler.CalculateSkillScoreCost，按性价比排序技能。
         顺便优先找出target中的技能，排除black中的技能。
+        当养成过程中学习技能时，若仅学习给定技能，则只返回target中有的技能；若赛前学习技能，则只返回target[0]中有的技能
         """
         has_unknown_skills = False
         tips_raw = ctx.cultivate_detail.turn_info.skill_hint_list
@@ -344,6 +345,22 @@ class SkillManagerGenerator:
         for level, priority_level in enumerate(target_list):
             for target_skill in priority_level:
                 skills[target_skill.id].grade *= 6 - level
+
+        # 育成中学习技能的调整
+        if not ctx.cultivate_detail.cultivate_finish:
+            if ctx.cultivate_detail.learn_skill_only_user_provided:
+                group_ids = set(x.group_id for level in target_list for x in level)
+            elif ctx.cultivate_detail.learn_skill_before_race and ctx.cultivate_detail.turn_info.racing:
+                # 赛前仅学习第一级
+                group_ids = set(x.group_id for level in target_list[0:1] for x in level)
+            else:
+                return tips
+            for tip in tips:
+                if tip.group_id not in group_ids:
+                    for dont_learn in skills.get_all_by_group_id(tip.group_id):
+                        if dont_learn.rate > 0:  # 负面技能不剔除
+                            dont_learn.cost = 9999999
+                            dont_learn.grade = -999999
         return tips
 
     @staticmethod

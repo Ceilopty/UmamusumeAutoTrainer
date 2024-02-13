@@ -58,6 +58,10 @@ def script_cultivate_main_menu(ctx: UmamusumeContext):
             and not ctx.cultivate_detail.turn_info.turn_learn_skill_done):
         if len(ctx.cultivate_detail.learn_skill_list) > 0 or not ctx.cultivate_detail.learn_skill_only_user_provided:
             ctx.ctrl.click_by_point(CULTIVATE_SKILL_LEARN)
+        elif has_extra_race and ctx.cultivate_detail.learn_skill_before_race \
+                and not ctx.cultivate_detail.learn_skill_before_race_done:
+            ctx.cultivate_detail.turn_info.racing = True
+            ctx.ctrl.click_by_point(CULTIVATE_SKILL_LEARN)
         else:
             ctx.cultivate_detail.learn_skill_done = True
             ctx.cultivate_detail.turn_info.turn_learn_skill_done = True
@@ -254,7 +258,15 @@ def script_cultivate_goal_race(ctx: UmamusumeContext):
             ctx.cultivate_detail.turn_info_history.append(ctx.cultivate_detail.turn_info)
         ctx.cultivate_detail.turn_info = TurnInfo()
         ctx.cultivate_detail.turn_info.date = current_date
+    ctx.cultivate_detail.turn_info.racing = True
+    if ctx.cultivate_detail.learn_skill_before_race and not ctx.cultivate_detail.turn_info.turn_learn_skill_done \
+            and not ctx.cultivate_detail.learn_skill_before_race_done:
+        ctx.ctrl.click(205, 1080, "技能")
+        return
     ctx.ctrl.click_by_point(CULTIVATE_GOAL_RACE_INTER_1)
+    # 避免赛后直接育成结束不学技能了
+    ctx.cultivate_detail.reset_skill_learn()
+    ctx.cultivate_detail.turn_info.turn_learn_skill_done = False
 
 
 def script_cultivate_race_list(ctx: UmamusumeContext):

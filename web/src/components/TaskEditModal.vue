@@ -13,7 +13,7 @@
                 <option v-for="task in umamusumeTaskTypeList" :value="task">{{task.name}}</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" v-if="selectedUmamusumeTaskType?.id !== 0">
               <label for="selectExecuteMode">⭐ 执行模式选择</label>
               <select v-model="selectedExecuteMode" class="form-control" id="selectExecuteMode">
                 <option :value=1>一次性</option>
@@ -418,7 +418,7 @@
               </div>
             </div>
           </form>
-          <div class="part" v-if="selectedExecuteMode === 2">
+          <div class="part" v-if="selectedExecuteMode === 2 && selectedUmamusumeTaskType?.id !== 0">
             <br>
             <h6>定时设置</h6>
             <hr />
@@ -429,15 +429,23 @@
               </div>
             </div>
           </div>
-          <br>
-          <h6>📱设备信息</h6>
-          <hr />
-          <div class="part">
+          <div class="part" v-if="selectedUmamusumeTaskType?.id !== 0">
+            <br><h6>📱设备信息</h6><hr />
             <div class="row">
               <div class="col">
                 <div class="form-group">
                   <label for="deviceName">设备名称</label>
                   <textarea type="text"  v-model="device_name" class="form-control" id="deviceName" placeholder="设备名，如127.0.0.1:16384 如为空则使用config.yaml中的设置"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="part" v-if="selectedUmamusumeTaskType?.id === 0">
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label for="myScript">自定义任务</label>
+                  <textarea type="text"  v-model="my_script" class="form-control" id="myScript" placeholder="json格式，添加单个任务时为{&quot;app_name&quot;:&quot;umamusume&quot;, blabla, &quot;cron_job_config&quot;:{}}，&#10添加多个任务时为[任务1,任务2,任务3,...]"></textarea>
                 </div>
               </div>
             </div>
@@ -475,6 +483,7 @@ export default {
         {id: 2, name: "竞技场"},
         {id: 3, name: "捐鞋"},
         {id: 4, name: "日常赛事"},
+        {id: 0, name: "自定义"},
       ],
       umamusumeList:[
         {id:1, name:'特别周'},
@@ -817,25 +826,25 @@ export default {
           race_tactic_3: 4,
           extraWeight:[],
         },
-        timeSaleItemList1:[
-          {id:0, name:"碎片一"},
-          {id:1, name:"碎片二"},
-          {id:2, name:"闹钟"},
-          {id:3, name:"甜点"},
-          {id:4, name:"协助积分"},
-        ],
-        timeSaleItemList2:[
-          {id:5, name:"短距离跑鞋"},
-          {id:6, name:"英里跑鞋"},
-          {id:7, name:"中距离跑鞋"},
-          {id:8, name:"长距离跑鞋"},
-          {id:9, name:"泥地跑鞋"},
-        ],
-        daily_race_type:[
-          {id:0, name:"月光奖（金币）"},
-          {id:1, name:"木星杯（协助积分）"},
-        ],
-        daily_race_difficulty:[
+      timeSaleItemList1:[
+        {id:0, name:"碎片一"},
+        {id:1, name:"碎片二"},
+        {id:2, name:"闹钟"},
+        {id:3, name:"甜点"},
+        {id:4, name:"协助积分"},
+      ],
+      timeSaleItemList2:[
+        {id:5, name:"短距离跑鞋"},
+        {id:6, name:"英里跑鞋"},
+        {id:7, name:"中距离跑鞋"},
+        {id:8, name:"长距离跑鞋"},
+        {id:9, name:"泥地跑鞋"},
+      ],
+      daily_race_type:[
+        {id:0, name:"月光奖（金币）"},
+        {id:1, name:"木星杯（协助积分）"},
+      ],
+      daily_race_difficulty:[
           {id:0, name:"EASY"},
           {id:1, name:"NORMAL"},
           {id:2, name:"HARD"},
@@ -844,6 +853,7 @@ export default {
       selectedExecuteMode: 1,
       expectTimes: 0,
       cron: "* * * * *",
+      my_script: "",
       
       selectedUmamusumeTaskType: undefined,
       selectedSupportCard: undefined,
@@ -981,7 +991,7 @@ export default {
       }
       payload.attachment_data.device_name = this.device_name
       console.log(JSON.stringify(payload))
-      this.axios.post("/task", JSON.stringify(payload)).then(
+      this.axios.post("/task", this.selectedUmamusumeTaskType.id === 0?this.my_script:JSON.stringify(payload)).then(
           ()=>{
             $('#create-task-list-modal').modal('hide');
           }

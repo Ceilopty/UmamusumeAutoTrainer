@@ -17,6 +17,9 @@ class SupportCardType(Enum):
     SUPPORT_CARD_TYPE_GROUP = 7
     SUPPORT_CARD_TYPE_NPC = 10
 
+    def __str__(self):
+        return {1: '速', 2: '耐', 3: '力', 4: '根', 5: '智', 6: '友', 7: '队', 10: 'NPC', 0: "未知"}.get(self.value, "")
+
 
 class SupportCardFavorLevel(Enum):
     SUPPORT_CARD_FAVOR_LEVEL_UNKNOWN = 0
@@ -24,6 +27,9 @@ class SupportCardFavorLevel(Enum):
     SUPPORT_CARD_FAVOR_LEVEL_2 = 2
     SUPPORT_CARD_FAVOR_LEVEL_3 = 3
     SUPPORT_CARD_FAVOR_LEVEL_4 = 4
+
+    def __str__(self):
+        return {1: '松', 2: '绿', 3: '金', 4: '满', 0: "未知"}.get(self.value, "")
 
 
 class TrainingType(Enum):
@@ -34,6 +40,9 @@ class TrainingType(Enum):
     TRAINING_TYPE_WILL = 4
     TRAINING_TYPE_INTELLIGENCE = 5
 
+    def __str__(self):
+        return {1: '速', 2: '耐', 3: '力', 4: '根', 5: '智', 0: "未知"}.get(self.value, "")
+
 
 class MotivationLevel(Enum):
     MOTIVATION_LEVEL_UNKNOWN = 0
@@ -43,6 +52,9 @@ class MotivationLevel(Enum):
     MOTIVATION_LEVEL_4 = 4
     MOTIVATION_LEVEL_5 = 5
 
+    def __str__(self):
+        return {1: '絶不調', 2: '不調', 3: '普通', 4: '好調', 5: '絶好調', 0: "未知"}.get(self.value, "")
+
 
 class TurnOperationType(Enum):
     TURN_OPERATION_TYPE_UNKNOWN = 0
@@ -51,6 +63,9 @@ class TurnOperationType(Enum):
     TURN_OPERATION_TYPE_MEDIC = 3
     TURN_OPERATION_TYPE_TRIP = 4
     TURN_OPERATION_TYPE_RACE = 5
+
+    def __str__(self):
+        return {1: '训练', 2: '休息', 3: '医务室', 4: '外出', 5: '赛事', 0: "未知"}.get(self.value, "")
 
 
 class SupportCardUma(Enum):

@@ -98,8 +98,14 @@
                 </div>
                 <div class="col-3">
                   <div class="form-group">
-                    <label for="inputClockUseLimit">使用闹钟数量限制</label>
+                    <label for="inputClockUseLimit">使用闹钟数量场限制</label>
                     <input v-model="clockUseLimit" type="number" class="form-control" id="inputClockUseLimit" placeholder="">
+                  </div>
+                </div>
+                <div class="col-3">
+                  <div class="form-group">
+                    <label for="inputClockUseDayLimit">使用闹钟数量日限制</label>
+                    <input v-model="clockUseDayLimit" type="number" class="form-control" id="inputClockUseDayLimit" placeholder="">
                   </div>
                 </div>
               </div>
@@ -820,6 +826,7 @@ export default {
           follow_support_card: {id:1, name:'在耀眼景色的前方'},
           follow_support_card_level: 50,
           clock_use_limit: 99,
+          clock_use_day_limit: 99,
           learn_skill_threshold: 9999,
           race_tactic_1: 4,
           race_tactic_2: 4,
@@ -872,6 +879,7 @@ export default {
       selectedRaceTactic2: 4,
       selectedRaceTactic3: 4,
       clockUseLimit: 99,
+      clockUseDayLimit: 99,
       learnSkillThreshold: 9999,
       recoverTPDrink: false,
       recoverTPDiamond: false,
@@ -957,6 +965,7 @@ export default {
           "learn_skill_blacklist": learn_skill_blacklist,
           "tactic_list": [this.selectedRaceTactic1, this.selectedRaceTactic2, this.selectedRaceTactic3],
           "clock_use_limit": this.clockUseLimit,
+          "clock_use_day_limit": this.clockUseDayLimit,
           "learn_skill_threshold": this.learnSkillThreshold,
           "allow_recover_tp_drink": this.recoverTPDrink,
           "allow_recover_tp_diamond": this.recoverTPDiamond,
@@ -1013,6 +1022,14 @@ export default {
       this.selectedRaceTactic3 = this.presetsUse.race_tactic_3,
       this.skillLearnBlacklist = this.presetsUse.skill_blacklist
 
+      if ('clock_use_day_limit' in this.presetsUse)
+      {
+        this.clockUseDayLimit =  this.clock_use_day_limit
+      }
+      else
+      {
+        this.clockUseDayLimit =  99
+      }
       if ('extraWeight' in this.presetsUse && this.presetsUse.extraWeight != [])
       {
         this.extraWeight1 =  this.presetsUse.extraWeight[0]
@@ -1070,6 +1087,7 @@ export default {
         follow_support_card: this.selectedSupportCard,
         follow_support_card_level: this.supportCardLevel,
         clock_use_limit: this.clockUseLimit,
+        clock_use_day_limit: this.clockUseDayLimit,
         learn_skill_threshold: this.learnSkillThreshold,
         race_tactic_1: this.selectedRaceTactic1,
         race_tactic_2: this.selectedRaceTactic2,

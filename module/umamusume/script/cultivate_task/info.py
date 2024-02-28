@@ -1,6 +1,7 @@
 import time
 from datetime import datetime as dt
 import cv2
+import croniter
 
 from bot.base.task import TaskStatus, EndTaskReason
 from module.umamusume.task import EndTaskReason as UEndTaskReason
@@ -73,15 +74,23 @@ def script_info(ctx: UmamusumeContext):
         if title_text == TITLE[2]:
             ctx.ctrl.click_by_point(NETWORK_ERROR_CONFIRM)
         if title_text == TITLE[3]:
+            clock_used = ctx.task.detail.timestamp['clock_used'].setdefault(ctx.task.device_name or "default", [0, 0.0])
+            if dt.now() > croniter.croniter("0 5 * * *", dt.fromtimestamp(clock_used[1])).get_next(dt):
+                clock_used[0] = 0
+            clock_used[1] = time.time()
             if ctx.prev_ui is INFO:
                 ctx.cultivate_detail.clock_used -= 1
-            if ctx.cultivate_detail.clock_use_limit > ctx.cultivate_detail.clock_used:
+                clock_used[0] -= 1
+            if (ctx.cultivate_detail.clock_use_limit > ctx.cultivate_detail.clock_used and
+                    ctx.cultivate_detail.clock_use_day_limit > clock_used[0]):
                 ctx.ctrl.click_by_point(RACE_FAIL_CONTINUE_USE_CLOCK)
                 ctx.cultivate_detail.clock_used += 1
+                clock_used[0] += 1
             else:
                 ctx.ctrl.click_by_point(RACE_FAIL_CONTINUE_CANCEL)
-            log.debug("闹钟限制%s,已使用%s", str(ctx.cultivate_detail.clock_use_limit),
-                      str(ctx.cultivate_detail.clock_used))
+            log.debug("闹钟场限制%s,已使用%s；闹钟日限制%s,已使用%s", str(ctx.cultivate_detail.clock_use_limit),
+                      str(ctx.cultivate_detail.clock_used),
+                      str(ctx.cultivate_detail.clock_use_day_limit), str(clock_used[0]))
         if title_text == TITLE[4]:
             ctx.ctrl.click_by_point(GET_TITLE_CONFIRM)
         if title_text == TITLE[5]:

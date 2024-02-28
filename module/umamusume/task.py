@@ -13,6 +13,7 @@ class TaskDetail:
     learn_skill_blacklist: list[str]
     tactic_list: list[int]
     clock_use_limit: int
+    clock_use_day_limit: int
     learn_skill_threshold: int
     learn_skill_only_user_provided: bool
     learn_skill_before_race: bool
@@ -42,6 +43,7 @@ class TaskDetail:
         'no_more_request': {},
         'daily_raced': {},
         'not_found_ui': {},
+        'clock_used': {},
     }
 
 
@@ -92,6 +94,7 @@ def build_task(task_execute_mode: TaskExecuteMode, task_type: int,
         td.learn_skill_blacklist = attachment_data['learn_skill_blacklist']
         td.tactic_list = attachment_data['tactic_list']
         td.clock_use_limit = attachment_data['clock_use_limit']
+        td.clock_use_day_limit = attachment_data['clock_use_day_limit']
         td.learn_skill_threshold = attachment_data['learn_skill_threshold']
         td.learn_skill_only_user_provided = attachment_data['learn_skill_only_user_provided']
         td.learn_skill_before_race = attachment_data['learn_skill_before_race']

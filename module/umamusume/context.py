@@ -268,6 +268,7 @@ class CultivateContextDetail:
     debut_race_win: bool
     clock_use_limit: int
     clock_used: int
+    clock_use_day_limit: int
     learn_skill_threshold: int
     learn_skill_only_user_provided: bool
     learn_skill_before_race: bool
@@ -299,6 +300,7 @@ class CultivateContextDetail:
         self.debut_race_win = False
         self.clock_use_limit = 0
         self.clock_used = 0
+        self.clock_use_day_limit = 0
         self.allow_recover_tp_drink = False
         self.allow_recover_tp_diamond = False
         self.parse_factor_done = False
@@ -406,6 +408,7 @@ def build_context(task: UmamusumeTask, ctrl) -> UmamusumeContext:
             detail.learn_skill_blacklist = task.detail.learn_skill_blacklist
             detail.tactic_list = task.detail.tactic_list
             detail.clock_use_limit = task.detail.clock_use_limit
+            detail.clock_use_day_limit = task.detail.clock_use_day_limit
             detail.learn_skill_threshold = task.detail.learn_skill_threshold
             detail.learn_skill_only_user_provided = task.detail.learn_skill_only_user_provided
             detail.learn_skill_before_race = task.detail.learn_skill_before_race

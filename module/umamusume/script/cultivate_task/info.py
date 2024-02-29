@@ -50,6 +50,7 @@ TITLE = [
     "日期变化",
     "连接已断开",
     "数据下载",
+    "解锁剧情",
 ]
 
 
@@ -139,7 +140,7 @@ def script_info(ctx: UmamusumeContext):
             ctx.ctrl.click_by_point(RECEIVE_GIFT)
         if title_text == TITLE[22]:
             ctx.ctrl.click_by_point(RECEIVE_GIFT_SUCCESS_CLOSE)
-        if title_text == TITLE[23]:
+        if title_text == TITLE[23] or title_text == TITLE[35]:
             ctx.ctrl.click_by_point(UNLOCK_STORY_TO_HOME_PAGE)
             ctx.ctrl.click_by_point(UNLOCK_STORY_TO_HOME_PAGE2)
         if title_text == TITLE[24]:

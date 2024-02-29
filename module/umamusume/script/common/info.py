@@ -30,6 +30,8 @@ TITLE = {
     "日期变化": lambda ctx: ctx.ctrl.click_by_point(DATE_CHANGE_CONFIRM),
     "连接已断开": lambda ctx: ctx.ctrl.click_by_point(CONNECTION_LOST_RESUME),
     "数据下载": lambda ctx: ctx.ctrl.click(520, 830, "数据下载确认"),
+    "解锁剧情": lambda ctx: ctx.ctrl.click_by_point(ACTIVITY_STORY_UNLOCK_CONFIRM) or
+        ctx.ctrl.click_by_point(ACTIVITY_STORY_UNLOCK_CONFIRM2),
 }
 
 

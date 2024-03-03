@@ -37,7 +37,7 @@ class SkillData(_Nameable):
     def name_while_learning(self):
         if self.rate == -1:
             return "消除" + self.name
-        return self.name
+        return self.name.replace("（", "").replace("）", "")
 
     @property
     def deconstruction(self):

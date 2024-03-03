@@ -168,9 +168,12 @@ def find_skill(ctx: UmamusumeContext, img, skill: list[str], learn_any_skill: bo
                     skill_name_img = skill_info_img[10: 47, 100: 445]
                     org_text = ocr_line(skill_name_img)
                     text = org_text.replace("曙", '踌躇').replace("凌房XDRIVE!", '凌厉×DRIVE！')  # 不知道咋搞，只能这样了
+                    text = text.replace("（", "").replace("）", "")  # 诡计前后会混淆
+                    text = text.replace("胜利著飞扑", "胜利者☆飞扑")
+                    text = text.replace("万与力", "十万马力")
                     if text in ("领跑", "跟前", "居中", "后追"):
                         text += '踌躇'
-                    result = find_similar_text(text, skill, 0.7)
+                    result = find_similar_text(text, skill, 0.83)
                     if DEBUG:
                         print(org_text + "->" + text + "->" + result)  # DEBUG
                     if result != "" or learn_any_skill:

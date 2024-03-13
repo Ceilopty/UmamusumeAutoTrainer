@@ -55,7 +55,7 @@ def script_team_stadium_home(ctx: UmamusumeContext):
 
 
 def script_team_stadium_home_na(ctx: UmamusumeContext):
-    ctx.task.end_task(TaskStatus.TASK_STATUS_FAILED, UEndTaskReason.OFF)
+    ctx.ctrl.click_by_point(TEAM_STADIUM_RETURN)
 
 
 def script_team_stadium_select_opponent(ctx: UmamusumeContext):

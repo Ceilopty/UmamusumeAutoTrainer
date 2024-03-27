@@ -62,6 +62,9 @@ class SkillData(_Nameable):
             return NotImplemented
         return self.id == other.id
 
+    def __str__(self):
+        return super().__str__() + str(self.cost)
+
 
 class SkillManager(list):
     @property

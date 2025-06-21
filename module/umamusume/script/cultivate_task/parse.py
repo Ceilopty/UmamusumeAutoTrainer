@@ -31,12 +31,12 @@ def parse_date(img, ctx: UmamusumeContext) -> int:
 
     if year_text == DATE_YEAR[3]:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        if image_match(img, URA_DATE_1).find_match:
-            return 97
+        if image_match(img, URA_DATE_3).find_match:
+            return 99
         elif image_match(img, URA_DATE_2).find_match:
             return 98
         else:
-            return 99
+            return 97
 
     if year_text == "":
         return -1

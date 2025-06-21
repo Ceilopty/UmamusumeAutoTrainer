@@ -80,8 +80,8 @@ def convert_date(ura_date: int) -> int:
     @bug: UAT在URA总决赛决赛时被97捞走了，避免耽误时间这边妥协一下
     """
     # TODO UAT修复了日期识别bug的话去掉if
-    if ura_date == 76:
-        return 97
+    # if ura_date == 76:
+    #     return 97
     return ura_date + 1 if ura_date < 72 else ura_date // 2 + 61
 
 
@@ -241,10 +241,13 @@ def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
     ura_parse_basic_information(ctx)  # 更新当前信息
     # 有些成功事件URA里没记录，干脆还是在UAT维护方便
     if DataBase:
-        if info.story_id in DataBase.success_events:
+        # レース勝利/入着/敗北、今度こそ負けない！
+        if (story_id := info.story_id % 1000) not in (708, 709, 710, 711):
+            story_id = info.story_id
+        if story_id in DataBase.success_events:
             from .parse.define import EventState
             from .parse.event_effect import EventEffects
-            for i, choice in enumerate(DataBase.success_events[info.story_id]["Choices"]):
+            for i, choice in enumerate(DataBase.success_events[story_id]["Choices"]):
                 for select_index in choice:
                     if info.select_indices[i] == select_index["SelectIndex"]:
                         info.effect[i] = EventEffects(select_index["Effect"])

@@ -4,6 +4,9 @@ import numpy as np
 
 log = logger.get_logger(__name__)
 
+PAR = 0.8
+FAILURE_THRESHOLD = 5
+
 
 def get_operation(ctx: UmamusumeContext) -> TurnOperation | None:
     turn_operation = TurnOperation()
@@ -14,11 +17,15 @@ def get_operation(ctx: UmamusumeContext) -> TurnOperation | None:
                                                           ctx.cultivate_detail.expect_attribute)
     support_card_result = get_training_support_card_score(ctx)
     training_level_result = get_training_level_score(ctx)
+    vital_result = get_vital_score(ctx)
 
     attribute_result_max = np.max(attribute_result)
     attribute_result_min = np.min(attribute_result)
-    normalized_attribute_result = (attribute_result - attribute_result_min) / (
-            attribute_result_max - attribute_result_min)
+    if attribute_result_max != attribute_result_min:
+        normalized_attribute_result = (attribute_result - attribute_result_min) / (
+                attribute_result_max - attribute_result_min)
+    else:
+        normalized_attribute_result = [1, 1, 1, 1, 1]
 
     support_card_max = np.max(support_card_result)
     support_card_min = np.min(support_card_result)
@@ -36,6 +43,28 @@ def get_operation(ctx: UmamusumeContext) -> TurnOperation | None:
     else:
         normalized_training_level_result = [1, 1, 1, 1, 1]
 
+    vital_max = np.max(vital_result)
+    vital_min = np.min(vital_result)
+    if vital_min != vital_max:
+        normalized_vital_result = (vital_result - vital_min) / (
+                vital_max - vital_min)
+    else:
+        normalized_vital_result = [1, 1, 1, 1, 1]
+
+    vital_weight = 0.2
+    # 临近合宿
+    if 35 <= ctx.cultivate_detail.turn_info.date <= 36:
+        vital_weight = 1
+    # 还在合宿
+    elif 36 < ctx.cultivate_detail.turn_info.date < 40:
+        vital_weight = 0.5
+    elif 59 <= ctx.cultivate_detail.turn_info.date <= 60:
+        vital_weight = 1
+    elif 60 < ctx.cultivate_detail.turn_info.date < 64:
+        vital_weight = 0.5
+    # 临近结束
+    elif 97 <= ctx.cultivate_detail.turn_info.date <= 99:
+        vital_weight = 0.1
     # 第一年
     if ctx.cultivate_detail.turn_info.date <= 24:
         attr_weight = 0.2
@@ -79,8 +108,10 @@ def get_operation(ctx: UmamusumeContext) -> TurnOperation | None:
     # 训练得分
     training_score = []
     for i in range(5):
-        training_score.append(normalized_attribute_result[i] * attr_weight + normalized_support_card_result[i] *
-                              support_card_weight + normalized_training_level_result[i] * training_level_weight)
+        training_score.append((normalized_attribute_result[i] * attr_weight + normalized_support_card_result[i] *
+                               support_card_weight + normalized_training_level_result[i] * training_level_weight +
+                               normalized_vital_result[i] * vital_weight) / (attr_weight + support_card_weight +
+                                                                             training_level_weight + vital_weight))
     log.debug("训练综合得分：" + str(training_score))
 
     # 出道战成功才能参加比赛
@@ -103,10 +134,10 @@ def get_operation(ctx: UmamusumeContext) -> TurnOperation | None:
         trip = True
 
     rest = False
-    if ctx.cultivate_detail.turn_info.remain_stamina <= 48:
+    failure_rate = ctx.cultivate_detail.turn_info.training_info_list[training_score.index(np.max(training_score))].failure_rate
+    if failure_rate > FAILURE_THRESHOLD and ctx.cultivate_detail.turn_info.date < 99:
         rest = True
-    elif (
-            ctx.cultivate_detail.turn_info.date == 36 or ctx.cultivate_detail.turn_info.date == 60) and ctx.cultivate_detail.turn_info.remain_stamina < 65:
+    elif ctx.cultivate_detail.turn_info.date in (36, 60) and ctx.cultivate_detail.turn_info.remain_stamina < 65:
         rest = True
 
     expect_operation_type = TurnOperationType.TURN_OPERATION_TYPE_UNKNOWN
@@ -228,6 +259,41 @@ def get_training_basic_attribute_score(ctx: UmamusumeContext, turn_info: TurnInf
             result[i] = result[i] * (1 - (target_percent[i] - avg))
     log.debug("每个训练的属性增长得分：" + str(result))
     return result
+
+
+def get_vital_score(ctx: UmamusumeContext) -> list[float]:
+    turn_info = ctx.cultivate_detail.turn_info
+    hp = turn_info.remain_stamina
+    max_hp = turn_info.max_vital
+    date = turn_info.date
+    vital_incr_list = [train.vital_incr for train in turn_info.training_info_list]
+    vital_after = [min(1, max(0, (hp + vital_incr) / max_hp)) for vital_incr in vital_incr_list]
+    if 34 < date < 37 or 58 < date < 61:  # 合宿前
+        expect = 0.9
+    elif 36 < date < 40 or 50 < date < 64:  # 合宿中
+        expect = 0.7
+    elif date == 24:  # 新年前
+        expect = 0.4
+    elif date == 48:  # 新年前
+        expect = 0.35
+    elif date == 49:  # 抽奖前
+        expect = 0.3
+    elif date > 96:
+        expect = 0
+    else:
+        expect = 0.5
+    result = [simple_vital_score(vital, expect) for vital in vital_after]
+    log.debug("每个训练的体力得分：" + str(result))
+    return result
+
+
+def simple_vital_score(result: float, expect: float) -> float:
+    if expect == 1:
+        return result
+    elif result > expect:
+        return 1 - (1 - result) / (1 - expect) * (1 - PAR)
+    else:
+        return result / expect * PAR
 
 
 status_score = [0.66, 1.15, 1.71, 2.25, 2.7, 2.96, 3.2, 3.45, 4.01, 4.26, 5.36, 6.70]

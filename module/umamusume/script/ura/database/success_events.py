@@ -88,4 +88,102 @@ success_events = {830029002: {"Id": 830029002,
                                   ]
                               ]
                               },
+                  708: {"Id": 708,
+                        "Choices": [
+                            [
+                                {
+                                    "SelectIndex": 1,
+                                    "Scenario": 0,
+                                    "State": 1,
+                                    "Effect": "体力-15"
+                                }
+                            ],
+                            [
+                                {
+                                    "SelectIndex": 1,
+                                    "Scenario": 0,
+                                    "State": 1,
+                                    "Effect": "体力-5"
+                                },
+                                {
+                                    "SelectIndex": 2,
+                                    "Scenario": 0,
+                                    "State": 0,
+                                    "Effect": "体力-25"
+                                },
+                            ]
+                        ]
+                        },
+                  709: {"Id": 709,
+                        "Choices": [
+                            [
+                                {
+                                    "SelectIndex": 1,
+                                    "Scenario": 0,
+                                    "State": 1,
+                                    "Effect": "体力-20"
+                                }
+                            ],
+                            [
+                                {
+                                    "SelectIndex": 1,
+                                    "Scenario": 0,
+                                    "State": 1,
+                                    "Effect": "体力-10"
+                                },
+                                {
+                                    "SelectIndex": 2,
+                                    "Scenario": 0,
+                                    "State": 0,
+                                    "Effect": "体力-30"
+                                },
+                            ]
+                        ]
+                        },
+                  710: {"Id": 710,
+                        "Choices": [
+                            [
+                                {
+                                    "SelectIndex": 1,
+                                    "Scenario": 0,
+                                    "State": 1,
+                                    "Effect": "体力-25"
+                                }
+                            ],
+                            [
+                                {
+                                    "SelectIndex": 1,
+                                    "Scenario": 0,
+                                    "State": 1,
+                                    "Effect": "体力-15"
+                                },
+                                {
+                                    "SelectIndex": 2,
+                                    "Scenario": 0,
+                                    "State": 0,
+                                    "Effect": "体力-35"
+                                },
+                            ]
+                        ]
+                        },
+                  711: {"Id": 711,
+                        "Choices": [
+                            [
+                                {
+                                    "SelectIndex": 1,
+                                    "Scenario": 0,
+                                    "State": 1,
+                                    "Effect": "やる気+1"
+                                }
+                            ],
+                            [
+                                {
+                                    "SelectIndex": 1,
+                                    "Scenario": 0,
+                                    "State": 1,
+                                    "Effect": "体力-25、「伏兵◯」のヒントLv+1"
+                                },
+                            ]
+                        ]
+                        },
                   }

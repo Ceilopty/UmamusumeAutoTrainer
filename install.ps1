@@ -29,9 +29,7 @@ if (!(Test-Path -Path "venv")) {
 .\venv\Scripts\activate
 Check "activate venv failed"
 
-pip install pyelftools==0.29 -i https://pypi.tuna.tsinghua.edu.cn/simple
-pip install paddlepaddle==2.3.2 -f https://www.paddlepaddle.org.cn/whl/windows/mkl/avx/stable.html
-pip install pdf2docx==0.5.6 -i https://pypi.tuna.tsinghua.edu.cn/simple
+pip install paddlepaddle==2.5.2 -f https://www.paddlepaddle.org.cn/whl/windows/mkl/avx/stable.html
 pip install --upgrade -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple
 
 Write-Output "install complete"

@@ -138,7 +138,7 @@ class U2AndroidController(AndroidController):
 
     def start_app(self, name):
         self.u2client.app_start(name)
-        log.info("starting app <" + name + ">")
+        log.debug("starting app <" + name + ">")
 
     def stop_app(self, name):
         self.u2client.app_stop(name)

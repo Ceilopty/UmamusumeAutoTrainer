@@ -61,8 +61,16 @@ class LocalizationMap:
 
     support_card = '暂无'
 
+
 localization_map = {attr: value for attr, value in vars(LocalizationMap).items()
                     if not callable(value) and not attr.startswith('_')}
+
+
+localization_map.update({
+    'True': '是',
+    'False': '否'
+})
+
 
 def _localization_single(string):
     for name, value in localization_map.items():

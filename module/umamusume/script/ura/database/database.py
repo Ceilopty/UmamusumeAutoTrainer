@@ -268,6 +268,7 @@ class DataBase:
                 print(f"[red]加载{os.path.basename(path)}时出现错误，请尝试重新更新数据[/]")
         else:
             print(f"[red]数据文件{os.path.basename(path)}不存在，请尝试重新更新数据[/]")
+        raise ImportError("URA文件缺失")
 
     @staticmethod
     def _load(path: str) -> str:

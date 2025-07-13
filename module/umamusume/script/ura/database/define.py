@@ -134,6 +134,10 @@ class ScenarioType(Enum):
     MAKE_A_NEW_TRACK = 4
     GRAND_MASTER = 5
     L_ARC = 6
+    UAF = 7
+    COOK = 8
+    MECHA = 9
+    LEGENDS = 10
     UNKNOWN = 0
 
 

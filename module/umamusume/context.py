@@ -197,6 +197,7 @@ class TurnInfo:
     person_list: list[SupportCardInfo]
     proper_info: list[list[int]]
     racing: bool
+    race_tactic_exist: list[bool]
 
     def __init__(self):
         self.date = -1
@@ -223,6 +224,7 @@ class TurnInfo:
         self.person_list = []
         self.proper_info = [[0, 0], [0, 0, 0, 0,], [0, 0, 0, 0]]
         self.racing = False
+        self.race_tactic_exist = [False, False, False, False]
 
     def log_turn_info(self, full=True, show_skill_and_hint=False):
         log.info("当前回合时间 >" + str(self.date))
@@ -246,7 +248,7 @@ class TurnInfo:
                 log.debug("当前状态：" + '，'.join(map(str, self.uma_condition_list)))
         if full or show_skill_and_hint:
             if len(self.learnt_skill_list) > 1:
-                log.debug("已获得技能启示：" + '，'.join(map(str, self.learnt_skill_list)))
+                log.debug("已习得技能：" + '，'.join(map(str, self.learnt_skill_list)))
             if self.skill_hint_list:
                 log.debug("已获得技能启示：" + '，'.join(map(str, self.skill_hint_list)))
 

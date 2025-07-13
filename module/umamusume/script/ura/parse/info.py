@@ -1,18 +1,29 @@
 from ..gallop import Data, Array
 from .define import *
 from .event_effect import *
-from ..database.define import CommandType
+from ..database.define import CommandType, ScenarioType
 from collections import namedtuple
 
 
-class UraPerson(Data):
+class Person(Data):
     personType: UraPersonType
     charaId: int
     cardIdInGame: int
     friendship: int
     isHint: bool
     cardRecord: int
+
+
+class UraPerson(Person):
     trainType: int
+
+
+class AoharuPerson(Person):
+    pass
+
+
+class BasePerson(Person):
+    pass
 
 
 TrainValue = namedtuple('TrainValue', ('speed',
@@ -36,6 +47,7 @@ class SkillTip(Data):
 
 
 class TurnInfo(Data):
+    scenario: ScenarioType
     umaId: int
     turn: int
     vital: int
@@ -50,18 +62,8 @@ class TurnInfo(Data):
     motivation: int
     isPositiveThinking: bool
     trainLevelCount: Array[int]
-    normalCardCount: int
     cardId: Array[int]
-    persons: Array[UraPerson]
-    motivationDropCount: int
-    ura_tsyFirstClick: bool
-    ura_tsyOutgoingUnlocked: bool
-    ura_tsyOutgoingRefused: bool
-    ura_tsyOutgoingUsed: int
-    ura_lmFirstClick: bool
-    ura_lmOutgoingUnlocked: bool
-    ura_lmOutgoingRefused: bool
-    ura_lmOutgoingUsed: int
+    persons: Array[Person]
     personDistribution: Array[Array[int]]
     trainValue: Array[Array[int]]
     failRate: Array[int]
@@ -72,6 +74,42 @@ class TurnInfo(Data):
     available_command_array: Array[CommandType]
     proper_info: Array[Array[int]]
     talent_level: int
+
+
+class TurnInfoURA(TurnInfo):
+    normalCardCount: int
+    persons: Array[UraPerson]
+    motivationDropCount: int
+    ura_tsyFirstClick: bool
+    ura_tsyOutgoingUnlocked: bool
+    ura_tsyOutgoingRefused: bool
+    ura_tsyOutgoingUsed: int
+    ura_lmFirstClick: bool
+    ura_lmOutgoingUnlocked: bool
+    ura_lmOutgoingRefused: bool
+    ura_lmOutgoingUsed: int
+
+
+class TurnInfoAoharu(TurnInfo):
+    persons: Array[AoharuPerson]
+
+
+class TurnInfoBase(TurnInfo):
+    umaStar: int
+    ptScoreRate: float
+    isRefreshMind: bool
+    zhongMaBlueCount: Array[int]
+    saihou: int
+    isRacing: bool
+    lockedTrainingId: int
+    friendship_noncard_yayoi: int
+    friendship_noncard_reporter: int
+    friend_type: int
+    friend_cardId: int
+    friend_personId: int
+    friend_stage: int
+    friend_outgoingUsed: int
+    playing_state: int
 
 
 class OriginEventInfo(Data):
@@ -93,6 +131,9 @@ class OriginEventInfo(Data):
 
 
 class EventInfo(Data):
+    islegal: bool
+    turn: int
+    eventCount: int
     triggerName: str
     eventName: str
     story_id: int

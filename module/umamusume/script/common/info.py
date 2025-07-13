@@ -33,6 +33,7 @@ TITLE = {
     "解锁剧情": lambda ctx: ctx.ctrl.click_by_point(ACTIVITY_STORY_UNLOCK_CONFIRM) or
         ctx.ctrl.click_by_point(ACTIVITY_STORY_UNLOCK_CONFIRM2),
     "维护中": lambda ctx: ctx.ctrl.click(360, 830, "返回标题页面"),
+    "每日宝石礼包": lambda ctx: ctx.ctrl.click(200, 830, "取消"),
 }
 
 

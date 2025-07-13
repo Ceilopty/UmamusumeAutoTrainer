@@ -31,11 +31,17 @@ def parse_date(img, ctx: UmamusumeContext) -> int:
 
     if year_text == DATE_YEAR[3]:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        if image_match(img, URA_DATE_3).find_match:
-            return 99
-        elif image_match(img, URA_DATE_2).find_match:
+        date_match = image_match(img, URA_DATE_1), image_match(img, URA_DATE_2), image_match(img, URA_DATE_3)
+        if date_match[0].find_match and not date_match[2].find_match:
+            return 97
+        elif date_match[1].find_match:
             return 98
+        elif not date_match[0].find_match and date_match[2].find_match:
+            return 99
         else:
+            log.warning("日期匹配异常，预赛分数：%s，决赛分数：%s", date_match[0].score, date_match[2].score)
+            if date_match[0].score >= date_match[2].score:
+                return 99
             return 97
 
     if year_text == "":

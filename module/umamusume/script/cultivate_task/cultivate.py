@@ -325,16 +325,33 @@ def script_cultivate_race_list(ctx: UmamusumeContext):
 
 
 def script_cultivate_before_race(ctx: UmamusumeContext):
+    time.sleep(0.5)  # 等待加载完毕
     img = cv2.cvtColor(ctx.current_screen, cv2.COLOR_BGR2RGB)
     p_check_skip = img[1175, 330]
 
+    # 前方脚质无人时自动切换后方脚质
+    tactic_exist = []
+    tactic_exist_check_points_list = [img[708, 460:500], img[708, 522:562], img[708, 580:620], img[708, 642:682]]
+    for tactic_exist_check_points in tactic_exist_check_points_list:
+        for tactic_exist_check_point in tactic_exist_check_points:
+            if not compare_color_equal(tactic_exist_check_points[0], tactic_exist_check_point):
+                tactic_exist.append(True)
+                break
+        else:
+            tactic_exist.append(False)
+    ctx.cultivate_detail.turn_info.race_tactic_exist[:] = tactic_exist
+    log.debug('脚质: %s', tactic_exist)
     date = ctx.cultivate_detail.turn_info.date
     if date != -1:
         tactic_check_point_list = [img[668, 480], img[668, 542], img[668, 600], img[668, 670]]
         if date <= 72:
-            p_check_tactic = tactic_check_point_list[ctx.cultivate_detail.tactic_list[int((date - 1) / 24)] - 1]
+            target_tactic = ctx.cultivate_detail.tactic_list[int((date - 1) / 24)] - 1
         else:
-            p_check_tactic = tactic_check_point_list[ctx.cultivate_detail.tactic_list[2] - 1]
+            target_tactic = ctx.cultivate_detail.tactic_list[2] - 1
+        final_target_tactic = min(target_tactic, 3 - tactic_exist[::-1].index(True))  # 不会都没人的
+        p_check_tactic = tactic_check_point_list[final_target_tactic]
+        if final_target_tactic != target_tactic:
+            log.info("调整脚质：%s -> %s", target_tactic, final_target_tactic)
         if compare_color_equal(p_check_tactic, [170, 170, 170]):
             ctx.ctrl.click_by_point(BEFORE_RACE_CHANGE_TACTIC)
             return

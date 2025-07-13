@@ -186,7 +186,11 @@ def _date_offset(ctx: UmamusumeContext, date: int, offset: int = 0) -> int:
     valid_dates_without_race = [_date for _date in valid_dates if _date not in _race_dates(ctx)]
     if date not in valid_dates_without_race:
         return _date_offset(ctx, date - 1, offset)
-    res = valid_dates_without_race[valid_dates_without_race.index(date) + offset]
+    index = valid_dates_without_race.index(date) + offset
+    if 0 <= index < len(valid_dates_without_race):
+        res = valid_dates_without_race[index]
+    else:
+        return -1
     if res not in valid_dates:
         return 0
     return res
@@ -345,11 +349,13 @@ def _add_favor(info: TurnInfo, effect: EventEffect) -> None:
 
 
 def score_context(ctx: UmamusumeContext) -> float:
-    log.debug("干劲得分：%.2f", motivation := _motivation(ctx))
-    log.debug("属性得分：%.2f", attribute := _attribute(ctx))
-    log.debug("状态得分：%.2f", condition := _condition(ctx))
-    log.debug("体力得分：%.2f", hp := _hp(ctx))
-    log.debug("技能得分：%.2f", skill := _skill(ctx))
-    log.debug("友情得分：%.2f", favor := _favor(ctx))
+    log.debug("干劲得分：%.2f，""属性得分：%.2f，""状态得分：%.2f，""体力得分：%.2f，""技能得分：%.2f，""友情得分：%.2f",
+              (motivation := _motivation(ctx)),
+              (attribute := _attribute(ctx)),
+              (condition := _condition(ctx)),
+              (hp := _hp(ctx)),
+              (skill := _skill(ctx)),
+              (favor := _favor(ctx)),
+              )
     log.debug("合计得分：%.2f", total := motivation + attribute + condition + hp + skill + favor)
     return total

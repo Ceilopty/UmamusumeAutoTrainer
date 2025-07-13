@@ -58,7 +58,7 @@ def default_npc_support_card_score(ctx: UmamusumeContext, info: SupportCardInfo)
     if (info.favor == SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_3 or
             info.favor == SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_4):
         return 0.1
-    return 1
+    return 0.2
 
 
 def default_group_support_card_score(ctx: UmamusumeContext, info: SupportCardInfo) -> float:
@@ -72,7 +72,7 @@ def default_unknown_support_card_score(ctx: UmamusumeContext, info: SupportCardI
     if (info.favor == SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_3 or
             info.favor == SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_4):
         return 0.1
-    return 0.5
+    return 0.1
 
 
 SCORE_DICT: dict = {

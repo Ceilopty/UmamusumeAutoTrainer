@@ -279,7 +279,7 @@ def get_vital_score(ctx: UmamusumeContext) -> list[float]:
     elif date == 49:  # 抽奖前
         expect = 0.3
     elif date > 96:
-        expect = 0
+        expect = 0.01
     else:
         expect = 0.5
     result = [simple_vital_score(vital, expect) for vital in vital_after]
@@ -292,8 +292,10 @@ def simple_vital_score(result: float, expect: float) -> float:
         return result
     elif result > expect:
         return 1 - (1 - result) / (1 - expect) * (1 - PAR)
-    else:
+    elif expect != 0:
         return result / expect * PAR
+    else:
+        return PAR
 
 
 status_score = [0.66, 1.15, 1.71, 2.25, 2.7, 2.96, 3.2, 3.45, 4.01, 4.26, 5.36, 6.70]

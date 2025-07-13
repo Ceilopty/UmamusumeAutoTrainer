@@ -301,6 +301,11 @@ def parse_training_result(ctx: UmamusumeContext, img, train_type: TrainingType):
     skill_point_incr_text = ocr_line(sub_img_skill_point_incr)
     skill_point_incr_text = re.sub("\\D", "", skill_point_incr_text)
 
+    failure_rate_basis_point = [105, 233, 360, 487, 615][train_type.value -1]
+    sub_img_failure_rate = img[920:960, failure_rate_basis_point:failure_rate_basis_point+65]
+    failure_rate_text = ocr_line(sub_img_failure_rate)
+    failure_rate_text = re.sub("\\D", "", failure_rate_text)
+
     if speed_incr_text != "":
         ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].speed_incr = int(
             speed_incr_text)
@@ -319,6 +324,9 @@ def parse_training_result(ctx: UmamusumeContext, img, train_type: TrainingType):
     if skill_point_incr_text != "":
         ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].skill_point_incr = int(
             skill_point_incr_text)
+    if failure_rate_text != "":
+        ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].failure_rate = int(
+            failure_rate_text)
 
 
 def find_support_card(ctx: UmamusumeContext, img):

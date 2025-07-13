@@ -20,10 +20,10 @@ def ocr(img, lang="ch"):
 def ocr_line(img, lang="ch"):
     ocr_result = ocr(img, lang)
     text = ""
-    ocr_result = ocr_result[0]
-    for text_info in ocr_result:
-        if len(text_info) > 0:
-            text += text_info[1][0]
+    if ocr_result[0] is not None:
+        for text_info in ocr_result[0]:
+            if len(text_info) > 0:
+                text += text_info[1][0]
     return text
 
 

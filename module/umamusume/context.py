@@ -226,14 +226,14 @@ class TurnInfo:
         self.racing = False
         self.race_tactic_exist = [False, False, False, False]
 
-    def log_turn_info(self, full=True, show_skill_and_hint=False):
+    def log_turn_info(self, train=True, show_skill_and_hint=False):
         log.info("当前回合时间 >" + str(self.date))
         log.info("干劲状态 " + str(self.motivation_level))
         log.info("体力剩余" + str(self.remain_stamina))
         log.info("当前属性值 速度：%s, 耐力：%s, 力量：%s, 毅力：%s, 智力：%s, 技能点：%s", self.uma_attribute.speed,
                  self.uma_attribute.stamina, self.uma_attribute.power, self.uma_attribute.will,
                  self.uma_attribute.intelligence, self.uma_attribute.skill_point)
-        if full:
+        if train:
             log.info("速度训练结果：")
             self.training_info_list[0].log_training_info()
             log.info("耐力训练结果：")
@@ -246,7 +246,7 @@ class TurnInfo:
             self.training_info_list[4].log_training_info()
             if self.uma_condition_list:
                 log.debug("当前状态：" + '，'.join(map(str, self.uma_condition_list)))
-        if full or show_skill_and_hint:
+        if show_skill_and_hint:
             if len(self.learnt_skill_list) > 1:
                 log.debug("已习得技能：" + '，'.join(map(str, self.learnt_skill_list)))
             if self.skill_hint_list:

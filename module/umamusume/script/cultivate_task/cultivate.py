@@ -71,7 +71,7 @@ def script_cultivate_main_menu(ctx: UmamusumeContext):
         ctx.cultivate_detail.reset_skill_learn()
 
     if not ctx.cultivate_detail.turn_info.parse_train_info_finish:
-        if has_extra_race or ctx.cultivate_detail.turn_info.remain_stamina < 48:
+        if has_extra_race or ctx.cultivate_detail.turn_info.remain_stamina < 48 and 0:  # 休息逻辑改了，老实读失败率
             ctx.cultivate_detail.turn_info.parse_train_info_finish = True
             return
         else:
@@ -334,7 +334,7 @@ def script_cultivate_before_race(ctx: UmamusumeContext):
     tactic_exist_check_points_list = [img[708, 460:500], img[708, 522:562], img[708, 580:620], img[708, 642:682]]
     for tactic_exist_check_points in tactic_exist_check_points_list:
         for tactic_exist_check_point in tactic_exist_check_points:
-            if not compare_color_equal(tactic_exist_check_points[0], tactic_exist_check_point):
+            if compare_color_equal([127, 72, 32], tactic_exist_check_point):
                 tactic_exist.append(True)
                 break
         else:
@@ -432,6 +432,7 @@ def script_cultivate_learn_skill(ctx: UmamusumeContext):
             ctx.ctrl.click_by_point(CULTIVATE_LEARN_SKILL_CONFIRM)
         else:
             ctx.ctrl.click_by_point(RETURN_TO_CULTIVATE_FINISH)
+            ctx.cultivate_detail.turn_info.turn_learn_skill_done = True
         return
     learn_skill_list: list[list[str]]
     learn_skill_blacklist: list[str] = ctx.cultivate_detail.learn_skill_blacklist

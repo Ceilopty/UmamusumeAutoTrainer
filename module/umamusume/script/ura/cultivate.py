@@ -315,6 +315,11 @@ def ura_parse_basic_information(ctx: UmamusumeContext):
         case _:
             scenario_turn_info = TurnInfo
     try:
+        if (now := time.time()) - (file := os.path.getmtime(get_info_filepath())) > TIMEOUT:
+            log.warning("超时, 当前时间：%s，文件时间：%s",
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(now)),
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file)))
+            return
         with open(get_info_filepath(), 'rb') as f:
             ura_info = scenario_turn_info(json.load(f))
     except FileNotFoundError:

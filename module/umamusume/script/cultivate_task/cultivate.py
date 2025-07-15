@@ -1,15 +1,17 @@
 import json
 import time
+import threading
 
 import numpy as np
 
 from bot.base.task import TaskStatus, EndTaskReason
 from module.umamusume.task import EndTaskReason as UEndTaskReason
 from module.umamusume.asset.point import *
-from module.umamusume.context import TurnInfo
 from module.umamusume.script.cultivate_task.const import SKILL_LEARN_PRIORITY_LIST
 from module.umamusume.script.cultivate_task.event import Event
 from module.umamusume.script.cultivate_task.parse import *
+from module.umamusume.script.cultivate_task.types import TurnInfo
+from module.umamusume.script.cultivate_task.event.manifest import get_event_choice
 try:
     from module.umamusume.script.ura.cultivate import ura_parse_cultivate_main_menu, ura_get_event_choice_by_effect
     from module.umamusume.script.ura.skill_ai import ura_script_cultivate_learn_skill
@@ -119,13 +121,22 @@ def script_cultivate_training_select(ctx: UmamusumeContext):
             return
 
     if not ctx.cultivate_detail.turn_info.parse_train_info_finish:
+        def _parse_training_in_thread(_ctx, _img, _train_type):
+            """Helper function to run parsing in a separate thread."""
+            parse_training_result(_ctx, _img, _train_type)
+            parse_training_support_card(_ctx, _img, _train_type)
+
+        threads: list[threading.Thread] = []
+
         img = ctx.current_screen
         train_type = parse_train_type(ctx, img)
         if train_type == TrainingType.TRAINING_TYPE_UNKNOWN:
             return
-        parse_training_result(ctx, img, train_type)
-        parse_training_support_card(ctx, img, train_type)
         viewed = train_type.value
+        thread = threading.Thread(target=_parse_training_in_thread, args=(ctx, img, train_type))
+        threads.append(thread)
+        thread.start()
+
         for i in range(5):
             if i != (viewed - 1):
                 retry = 0
@@ -140,8 +151,14 @@ def script_cultivate_training_select(ctx: UmamusumeContext):
                     retry += 1
                 if retry == max_retry:
                     return
-                parse_training_result(ctx, img, TrainingType(i + 1))
-                parse_training_support_card(ctx, img, TrainingType(i + 1))
+
+                thread = threading.Thread(target=_parse_training_in_thread, args=(ctx, img, TrainingType(i + 1)))
+                threads.append(thread)
+                thread.start()
+
+        for thread in threads:
+            thread.join()
+
         ctx.cultivate_detail.turn_info.parse_train_info_finish = True
     if not ctx.cultivate_detail.turn_info.parse_main_menu_finish:
         ctx.ctrl.click_by_point(RETURN_TO_CULTIVATE_MAIN_MENU)
@@ -162,6 +179,10 @@ def script_main_menu(ctx: UmamusumeContext):
         if time.time() < croniter.croniter("0 5 * * *", ts).get_next(datetime.datetime).timestamp():
             ctx.task.end_task(TaskStatus.TASK_STATUS_FAILED, UEndTaskReason.BORROWED)
             return
+    if ctx.cultivate_detail.scenario_tried >= len(SCENARIO_DICT):
+        log.error(f"找不到指定的剧本")
+        ctx.task.end_task(TaskStatus.TASK_STATUS_FAILED, UEndTaskReason.SCENARIO_NOT_FOUND)
+        return
     ctx.ctrl.click_by_point(TO_CULTIVATE_SCENARIO_CHOOSE)
 
 
@@ -169,11 +190,16 @@ def script_scenario_select(ctx: UmamusumeContext):
     if ctx.cultivate_detail.no_tp or ctx.cultivate_detail.borrowed:
         ctx.ctrl.click(360, 1220, "返回主界面")
         return
-    for _ in range(20):
+    while ctx.cultivate_detail.scenario_tried < len(SCENARIO_DICT):
         img = ctx.ctrl.get_screen()
-        if find_scenario(ctx, img, ctx.cultivate_detail.scenario.value):
+        if find_scenario(ctx, img, ctx.cultivate_detail.scenario.scenario_type()):
             ctx.ctrl.click_by_point(TO_CULTIVATE_PREPARE_NEXT)
+            ctx.cultivate_detail.scenario_tried = 0
+            log.info(f"找到目标育成剧本{ctx.cultivate_detail.scenario.scenario_name()}")
             return
+        ctx.cultivate_detail.scenario_tried += 1
+        log.debug(f"剧本不匹配, 查看下一个剧本")
+        time.sleep(1)
     else:
         # 未找到目标剧本
         ctx.ctrl.click(360, 1220, "返回主界面")
@@ -243,7 +269,7 @@ def script_cultivate_event(ctx: UmamusumeContext):
         # 避免出现选项残缺的情况，这里重新解析一次
         img = ctx.ctrl.get_screen()
         event_name, selector_list = parse_cultivate_event(ctx, img)
-        choice_index = ura_get_event_choice_by_effect(ctx) or Event(event_name)(ctx)
+        choice_index = get_event_choice(ctx, event_name) or ura_get_event_choice_by_effect(ctx) or Event(event_name)(ctx)
         # 意外情况容错
         if choice_index > len(selector_list):
             choice_index = 1
@@ -251,6 +277,61 @@ def script_cultivate_event(ctx: UmamusumeContext):
                        "事件选项-" + str(choice_index))
     else:
         log.debug("未出现选项")
+
+
+def script_aoharuhai_race(ctx: UmamusumeContext):
+    img = ctx.ctrl.get_screen(to_gray=True)
+    if image_match(img, UI_AOHARUHAI_RACE_1).find_match:
+        race_index = 0
+    elif image_match(img, UI_AOHARUHAI_RACE_2).find_match:
+        race_index = 1
+    elif image_match(img, UI_AOHARUHAI_RACE_3).find_match:
+        race_index = 2
+    elif image_match(img, UI_AOHARUHAI_RACE_4).find_match:
+        race_index = 3
+    elif image_match(img, UI_AOHARUHAI_RACE_5).find_match:
+        race_index = 4
+    else:
+        ctx.ctrl.click(360, 1180, "确认比赛结果")
+        return
+
+    ctx.cultivate_detail.turn_info.scenario_info.aoharu_race_index = race_index
+    ctx.ctrl.click(360, 1080, "开始青春杯对战")
+
+
+def script_aoharuhai_race_final_start(ctx: UmamusumeContext):
+    ctx.ctrl.click(360, 980, "确认决赛对手")
+
+
+def script_aoharuhai_race_select_opponent(ctx: UmamusumeContext):
+    def select_opponent(race_index: int):
+        match race_index:
+            case 1:
+                ctx.ctrl.click(360, 290, "选择第一个对手")
+            case 2:
+                ctx.ctrl.click(360, 560, "选择第二个对手")
+            case 3:
+                ctx.ctrl.click(360, 830, "选择第三个对手")
+        time.sleep(2)
+        ctx.ctrl.click(360, 1080, "开始对战")
+    select_opponent(ctx.task.detail.scenario_config.aoharu_config.get_opponent(
+        ctx.cultivate_detail.turn_info.scenario_info.aoharu_race_index))
+
+
+def script_aoharuhai_race_confirm(ctx: UmamusumeContext):
+    ctx.ctrl.click(520, 920, "确认对战")
+
+
+def script_aoharuhai_race_inrace(ctx: UmamusumeContext):
+    ctx.ctrl.click(520, 1180, "查看对战结果")
+
+
+def script_aoharuhai_race_end(ctx: UmamusumeContext):
+    ctx.ctrl.click(350, 1110, "确认比赛结束")
+
+
+def script_aoharuhai_race_schedule(ctx: UmamusumeContext):
+    ctx.ctrl.click(360, 1100, "结束青春杯比赛")
 
 
 def script_cultivate_goal_race(ctx: UmamusumeContext):
@@ -334,13 +415,18 @@ def script_cultivate_before_race(ctx: UmamusumeContext):
     tactic_exist_check_points_list = [img[708, 460:500], img[708, 522:562], img[708, 580:620], img[708, 642:682]]
     for tactic_exist_check_points in tactic_exist_check_points_list:
         for tactic_exist_check_point in tactic_exist_check_points:
-            if compare_color_equal([127, 72, 32], tactic_exist_check_point):
+            if compare_color_equal([127, 72, 32], tactic_exist_check_point, 20):
                 tactic_exist.append(True)
                 break
         else:
             tactic_exist.append(False)
     ctx.cultivate_detail.turn_info.race_tactic_exist[:] = tactic_exist
     log.debug('脚质: %s', tactic_exist)
+    if not any(tactic_exist):
+        log.error("比赛脚质分布识别异常，稍后再试")
+        log.debug("检查点：%s", tactic_exist_check_points_list)
+        time. sleep(1)
+        return
     date = ctx.cultivate_detail.turn_info.date
     if date != -1:
         tactic_check_point_list = [img[668, 480], img[668, 542], img[668, 600], img[668, 670]]
@@ -396,6 +482,15 @@ def script_cultivate_extend(ctx: UmamusumeContext):
 
 def script_cultivate_result(ctx: UmamusumeContext):
     ctx.ctrl.click_by_point(CULTIVATE_RESULT_CONFIRM)
+
+
+# 限时: 富士奇石的表演秀
+def script_fujikiseki_show_result_1(ctx: UmamusumeContext):
+    ctx.ctrl.click(360, 1180, "确认富士奇石表演秀模式结果")
+
+
+def script_fujikiseki_show_result_2(ctx: UmamusumeContext):
+    ctx.ctrl.click(360, 1120, "确认富士奇石表演秀模式结果")
 
 
 # 1.878s 2s 0.649s
@@ -454,7 +549,7 @@ def script_cultivate_learn_skill(ctx: UmamusumeContext):
     try:
         ura_script_cultivate_learn_skill(ctx, learn_skill_list, learn_skill_blacklist)
     except (ImportError, Exception) as e:
-        print("出问题了", e)
+        log.error("出问题了: %s", e)
     else:
         return
 

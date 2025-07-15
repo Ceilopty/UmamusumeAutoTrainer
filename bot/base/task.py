@@ -59,8 +59,8 @@ class Task(metaclass=ABCMeta):
         self.cron_job_config = cron_job_config
 
     @abstractmethod
-    def end_task(self, status, reason) -> None:
-        log.info("任务结束：" + self.task_status.name + "->" + status.name)
+    def end_task(self, status: TaskStatus, reason: EndTaskReason) -> None:
+        log.info("任务结束：" + self.task_status.name + "->" + status.name + "" + reason.value)
         self.task_status = status
         self.end_task_reason = reason
 

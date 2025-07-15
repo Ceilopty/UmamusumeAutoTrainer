@@ -19,7 +19,7 @@ def ura_script_cultivate_learn_skill(ctx: UmamusumeContext,
     origin_ctx = ctx
     ctx = context_copy(ctx)
     ura_parse_basic_information(ctx)  # 刷新下状态
-    ctx.cultivate_detail.turn_info.log_turn_info(False, True)
+    ctx.cultivate_detail.turn_info.log_turn_info(ctx.task.detail.scenario, False, True)
     # 找出最佳技能
     target_skill_list = []
     learn = parse_skill_tips_response(ctx,
@@ -138,13 +138,11 @@ def parse_skill_tips_response(ctx: UmamusumeContext,
             this_rank = get_rank(rank.rank)
             next_rank_point = rank.max_value + 1
             break
-    print(
+    log.info(
         f"预测总分: {learnt_point}(已学习技能) + {will_learn_point}(即将学习技能) + {status_point}(属性) = {total_point}({this_rank})")
-    print(f"距离下一阶还差{next_rank_point - total_point}分")
-    print("计划学习: ", end='')
-    for x in learn:
-        print(x, end=', ')
-    print(f"\n现有技能点{total_sp}，学习技能后剩余{dp_result[2]}")
+    log.info(f"距离下一阶还差{next_rank_point - total_point}分")
+    log.info("计划学习: " + ', '.join(str(s) for s in learn))
+    log.info(f"现有技能点{total_sp}，学习技能后剩余{dp_result[2]}")
     return learn
 
 
@@ -174,6 +172,7 @@ def find_skill(ctx: UmamusumeContext, img, skill: list[str], learn_any_skill: bo
                     text = text.replace("十方马力", "十万马力")
                     text = text.replace("湾道", "弯道")
                     text = text.replace("诀跨", "诀窍")
+                    text = text.replace("大育王", "大胃王")
                     if text in ("领跑", "跟前", "居中", "后追"):
                         text += '踌躇'
                     result = find_similar_text(text, skill, 0.83)
@@ -182,7 +181,7 @@ def find_skill(ctx: UmamusumeContext, img, skill: list[str], learn_any_skill: bo
                     if result == "":
                         result = find_similar_text(text + "◎", skill, 0.91)
                     if DEBUG:
-                        print(org_text + "->" + text + "->" + result)  # DEBUG
+                        log.debug(org_text + "->" + text + "->" + result)  # DEBUG
                     if result != "" or learn_any_skill:
                         tmp_img = ctx.ctrl.get_screen()
                         pt_text = re.sub("\\D", "", ocr_line(tmp_img[400: 440, 490: 665]))

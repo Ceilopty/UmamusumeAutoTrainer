@@ -6,20 +6,26 @@ from collections import namedtuple
 
 
 class Person(Data):
-    personType: UraPersonType
     charaId: int
     cardIdInGame: int
     friendship: int
     isHint: bool
     cardRecord: int
+    trainType: int
+    personType: Enum
 
 
 class UraPerson(Person):
-    trainType: int
+    personType: UraPersonType
 
 
 class AoharuPerson(Person):
-    pass
+    personType: AoharuPersonType
+    member_state: int       # 1为出现，0未出现
+    soul_threshold_id: int  # 5为可魂爆
+    soul_event_state: int   # 1为已魂爆
+    isGuide: bool           # 青春训练
+    isSoul: bool            # 魂爆
 
 
 class BasePerson(Person):
@@ -92,7 +98,23 @@ class TurnInfoURA(TurnInfo):
 
 class TurnInfoAoharu(TurnInfo):
     persons: Array[AoharuPerson]
-
+    friend_type: int    # 0没带友人卡，1ssr卡，2r卡
+    friend_stage: int   # 0未点击，1点击还未解锁出行，2已解锁出行
+    friend_outgoingUsed: bool
+    umaStar: int
+    islegal: bool
+    ptScoreRate: float
+    isRefreshMind: bool
+    saihou: int
+    isRacing: bool
+    playing_state: int
+    normalCardCount: int
+    motivationDropCount: int
+    lockedTrainingId: int
+    friendship_noncard_yayoi: int
+    friendship_noncard_reporter: int
+    friend_cardId: int
+    friend_personId:int
 
 class TurnInfoBase(TurnInfo):
     umaStar: int

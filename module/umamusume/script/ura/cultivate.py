@@ -1,13 +1,18 @@
 import os.path
 import time
 
-from module.umamusume.context import UmamusumeContext, Condition, SupportCardInfo, LearntSkill, SkillHint
+from module.umamusume.context import UmamusumeContext
 from module.umamusume.script.cultivate_task.parse import logger, parse_debut_race
-from module.umamusume.define import SupportCardType, MotivationLevel, ScenarioType
+from module.umamusume.define import SupportCardType, MotivationLevel, ScenarioType, Condition
 from module.umamusume.script.cultivate_task.event.event_ai import score_context, context_plus_effect, context_copy
+from module.umamusume.script.cultivate_task.types import (SupportCardInfo, LearntSkill, SkillHint,
+                                                          ScenarioInfo, UraInfo, AoharuInfo,
+                                                          )
 from .database import get_info_filepath, DataBase
 from .database.define import CommandType
-from .parse import TurnInfo, TurnInfoURA, TurnInfoAoharu, TurnInfoBase, EventInfo, UraPerson, UraPersonType
+from .parse import (TurnInfo, TurnInfoURA, TurnInfoAoharu, TurnInfoBase, EventInfo,
+                    Person, UraPerson, UraPersonType, AoharuPerson, AoharuPersonType,
+                    )
 from .event_logger import EventLogger
 import json
 from typing import Optional
@@ -25,7 +30,7 @@ def ura_parse_cultivate_main_menu(ctx: UmamusumeContext, img=None):
                         time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file)))
             return
         with open(get_info_filepath(), 'rb') as f:
-            match ctx.cultivate_detail.scenario:
+            match ctx.cultivate_detail.scenario.scenario_type():
                 case ScenarioType.SCENARIO_TYPE_URA:
                     ura_info = TurnInfoURA(json.load(f))
                 case ScenarioType.SCENARIO_TYPE_AOHARU:
@@ -71,9 +76,11 @@ def ura_parse_cultivate_main_menu(ctx: UmamusumeContext, img=None):
     ura_parse_person_list(ctx, ura_info)
     ura_parse_training(ctx, ura_info)
     ura_parse_skills(ctx, ura_info)
-    match ctx.cultivate_detail.scenario:
+    match ctx.cultivate_detail.scenario.scenario_type():
         case ScenarioType.SCENARIO_TYPE_URA:
             ura_parse_ura_info(ctx, ura_info)
+        case ScenarioType.SCENARIO_TYPE_AOHARU:
+            ura_parse_aoharu_info(ctx, ura_info)
     # 检查是否需要log event effect
     EventLogger.view(ctx)
 
@@ -92,7 +99,7 @@ def convert_date(ura_date: int) -> int:
     return ura_date + 1 if ura_date < 72 else ura_date // 2 + 61
 
 
-def convert_support_type(person: UraPerson) -> SupportCardType:
+def convert_support_type(person: UraPerson | AoharuPerson) -> SupportCardType:
     """
     将URA生成的TurnInfo里的人头类型转换成UAT中的支援卡类型
     包含传统的速耐力根智，友团（URA的URA举剧本还没搞）以及NPC
@@ -102,20 +109,46 @@ def convert_support_type(person: UraPerson) -> SupportCardType:
     @rtype: SupportCardType
     """
     _dict = {101: 1, 102: 3, 103: 4, 105: 2, 106: 5, 0: 6, -1: 0}
-    match person.personType:
-        case UraPersonType.Normal:
-            return SupportCardType(_dict[person.trainType])
-        case UraPersonType.Akikawa | UraPersonType.Otonashi | UraPersonType.Kiryuuin:
-            return SupportCardType.SUPPORT_CARD_TYPE_NPC
-        case UraPersonType.HayakawaS | UraPersonType.KiryuuinS:
-            return SupportCardType.SUPPORT_CARD_TYPE_FRIEND
-        case UraPersonType.Unknown | _:
-            return SupportCardType.SUPPORT_CARD_TYPE_UNKNOWN
+    match person:
+        case UraPerson():
+            match person.personType:
+                case UraPersonType.Normal:
+                    return SupportCardType(_dict[person.trainType])
+                case UraPersonType.Akikawa | UraPersonType.Otonashi | UraPersonType.Kiryuuin:
+                    return SupportCardType.SUPPORT_CARD_TYPE_NPC
+                case UraPersonType.HayakawaS | UraPersonType.KiryuuinS:
+                    return SupportCardType.SUPPORT_CARD_TYPE_FRIEND
+                case UraPersonType.Unknown | _:
+                    return SupportCardType.SUPPORT_CARD_TYPE_UNKNOWN
+        case AoharuPerson():
+            match person.personType:
+                case AoharuPersonType.Normal:
+                    return SupportCardType(_dict[person.trainType])
+                case AoharuPersonType.Akikawa | AoharuPersonType.Otonashi | AoharuPersonType.Kiryuuin:
+                    return SupportCardType.SUPPORT_CARD_TYPE_NPC
+                case AoharuPersonType.KashimotoNoCard | AoharuPersonType.NPC:
+                    return SupportCardType.SUPPORT_CARD_TYPE_NPC
+                case AoharuPersonType.Kashimoto:
+                    return SupportCardType.SUPPORT_CARD_TYPE_FRIEND
+                case AoharuPersonType.Unknown | _:
+                    return SupportCardType.SUPPORT_CARD_TYPE_UNKNOWN
 
 
-def get_name_from_person_and_ids(person: UraPerson, card_ids: list[int]) -> str:
+def get_name_from_person_and_ids(scenario: ScenarioType, person: Person, card_ids: list[int]) -> str:
     if person.cardIdInGame == -1:  # NPC,
-        sid = {1: 9004, 3: 9001, 4: 9002, 5: 9003, 6: 9004}[person.personType.value]
+        match scenario:
+            case ScenarioType.SCENARIO_TYPE_URA:
+                sid = {1: 9004, 3: 9001, 4: 9002, 5: 9003, 6: 9004}[person.personType.value]
+            case ScenarioType.SCENARIO_TYPE_AOHARU:
+                if person.personType.value == 3:
+                    if person.charaId == 0:
+                        return "NPC"
+                    else:
+                        sid = person.charaId
+                else:
+                    sid = {1: 9006, 4: 9002, 5: 9003, 6: 9004, 7: 9006}[person.personType.value]
+            case _:
+                raise ValueError("未知剧本")
     else:
         sid = card_ids[person.cardIdInGame] // 10  # Id是 // 10，凸是 % 10
     if sid < 10000:
@@ -204,7 +237,7 @@ def get_hint_name_by_id_and_rarity(group_id, rarity):
 
 
 def ura_parse_ura_info(ctx: UmamusumeContext, info: TurnInfoURA):
-    ura_info = ctx.cultivate_detail.turn_info.ura_info
+    ura_info = ctx.cultivate_detail.turn_info.scenario_info = UraInfo()
     ura_info.ura_tsyInfo.first_click = info.ura_tsyFirstClick
     ura_info.ura_tsyInfo.outgoing_unlocked = info.ura_tsyOutgoingUnlocked
     ura_info.ura_tsyInfo.outgoing_refused = info.ura_tsyOutgoingRefused
@@ -215,16 +248,30 @@ def ura_parse_ura_info(ctx: UmamusumeContext, info: TurnInfoURA):
     ura_info.ura_lmInfo.outgoing_used = info.ura_lmOutgoingUsed
 
 
+def ura_parse_aoharu_info(ctx: UmamusumeContext, info: TurnInfoAoharu):
+    aoharu_info = ctx.cultivate_detail.turn_info.scenario_info = AoharuInfo()
+    aoharu_info.aoharu_kashimotoInfo.first_click = info.friend_stage > 0
+    aoharu_info.aoharu_kashimotoInfo.outgoing_unlocked = info.friend_stage > 1
+    aoharu_info.aoharu_kashimotoInfo.outgoing_used = info.friend_outgoingUsed
+
+
 def ura_parse_person_list(ctx: UmamusumeContext, info: TurnInfo):
     for person in info.persons:
         if not person.personType.value:
             ctx.cultivate_detail.turn_info.person_list.append(SupportCardInfo())
             continue
+        can_incr_aoharu_train = False
+        match ctx.cultivate_detail.scenario.scenario_type():
+            case ScenarioType.SCENARIO_TYPE_AOHARU:
+                can_incr_aoharu_train = person.member_state and person.isGuide and person.soul_threshold_id < 5
         ctx.cultivate_detail.turn_info.person_list.append(
             SupportCardInfo(card_type=convert_support_type(person),
                             favor_num=person.friendship,
                             has_event=person.isHint,
-                            name=get_name_from_person_and_ids(person, info.cardId)))
+                            name=get_name_from_person_and_ids(ctx.cultivate_detail.scenario.scenario_type(),
+                                                              person, info.cardId),
+                            can_incr_aoharu_train=can_incr_aoharu_train,
+                            ))
 
 
 def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
@@ -262,7 +309,7 @@ def ura_get_event_choice_by_effect(ctx: UmamusumeContext) -> int:
                         break
     ura_log_event_effect(info)
     origin_ctx = ctx
-    ctx.cultivate_detail.turn_info.log_turn_info(False)
+    ctx.cultivate_detail.turn_info.log_turn_info(ctx.task.detail.scenario, False)
     log.debug("计算初始得分：", )
     standard = score_context(ctx)
     score_of_choices = []
@@ -307,7 +354,7 @@ def ura_log_event_effect(info: EventInfo):
 
 def ura_parse_basic_information(ctx: UmamusumeContext):
     """遇到事件或学技能时更新下基础信息"""
-    match ctx.cultivate_detail.scenario:
+    match ctx.cultivate_detail.scenario.scenario_type():
         case ScenarioType.SCENARIO_TYPE_URA:
             scenario_turn_info = TurnInfoURA
         case ScenarioType.SCENARIO_TYPE_AOHARU:

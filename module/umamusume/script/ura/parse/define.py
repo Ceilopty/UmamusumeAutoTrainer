@@ -18,6 +18,27 @@ class UraPersonType(Enum):
     Kiryuuin = 6
 
 
+class AoharuPersonType(Enum):
+    """
+    0代表未加载（例如前两个回合的npc）
+    1代表友人（R或SSR都行）
+    2代表普通支援卡
+    3代表npc人头
+    4理事长
+    5记者
+    6桐生院葵
+    7不带卡的友人
+    暂不支持其他友人/团队卡"""
+    Unknown = 0
+    Kashimoto = 1
+    Normal = 2
+    NPC = 3
+    Akikawa = 4
+    Otonashi = 5
+    Kiryuuin = 6
+    KashimotoNoCard = 7
+
+
 class EventState(Enum):
     Unknown = -1
     Fail = 0

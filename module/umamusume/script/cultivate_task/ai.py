@@ -1,5 +1,6 @@
 from module.umamusume.context import *
 from module.umamusume.script.cultivate_task.support_card import get_support_card_score
+from module.umamusume.script.cultivate_task.types import *
 import numpy as np
 
 log = logger.get_logger(__name__)

@@ -1,7 +1,7 @@
 <template>
-  <div id="create-task-list-modal" class="modal fade">
+  <div id="create-task-list-modal" class="modal fade" data-backdrop="static" data-keyboard="false">
     <div  class="modal-dialog modal-dialog-centered modal-xl">
-      <div class="modal-content">
+      <div class="modal-content" :class="{ 'dimmed': showAoharuConfigModal }">
         <h5 class="modal-header">
           新建任务
         </h5>
@@ -58,6 +58,34 @@
                   </div>
                 </div>
               </div>
+              <!-- 青春杯额外配置 -->
+              <div class="row" v-if="selectedScenario?.id === 2">
+                <div class="col-4">
+                  <div class="form-group">
+                    <span class="btn auto-btn" style="width: 100%; background-color:#6c757d;" v-on:click="openAoharuConfigModal">青春杯配置</span>
+                  </div>
+                </div>
+              </div>
+              <!-- 限时模块: 富士奇石的表演秀模式 -->
+              <div class="row">
+                <div class="col-3">
+                  <div class="form-group">
+                    <label>⏰ 富士奇石的表演秀模式</label>
+                    <select v-model="fujikisekiShowMode" class="form-control">
+                      <option :value=true>是</option>
+                      <option :value=false>否</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="form-group">
+                    <label :style="{ color: fujikisekiShowMode ? '' : 'lightgrey' }">选择难度</label>
+                    <select v-model="fujikisekiShowDifficulty" class="form-control" :disabled="!fujikisekiShowMode">
+                      <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>  
               <div class="row">
                 <div class="col-8">
                   <div class="form-group">
@@ -458,9 +486,19 @@
           </div>
         </div>
         <div class="modal-footer">
+          <span class="btn cancel-btn" v-on:click="cancelTask">取消</span>
           <span class="btn auto-btn" v-on:click="addTask">确定</span>
         </div>
       </div>
+      <!-- 青春杯配置弹窗 -->
+      <AoharuConfigModal
+        v-model:show="showAoharuConfigModal"
+        :preliminaryRoundSelections="preliminaryRoundSelections"
+        :aoharuTeamNameSelection="aoharuTeamNameSelection"
+        @confirm="handleAoharuConfigConfirm"
+      ></AoharuConfigModal>
+      <!-- 遮罩层 -->
+      <div v-if="showAoharuConfigModal" class="modal-backdrop-overlay" @click.stop></div>
       <!-- 通知 -->
       <div class="position-fixed" style="z-index: 5; right: 40%; width: 300px;">
         <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="2000">
@@ -474,8 +512,15 @@
 </template>
 
 <script>
+import SkillIcon from './SkillIcon.vue';
+import AoharuConfigModal from './AoharuConfigModal.vue';
+
 export default {
   name: "TaskEditModal",
+  components: {
+    SkillIcon,
+    AoharuConfigModal
+  },
   data:function () {
     return{
       showAdvanceOption:false,
@@ -483,6 +528,8 @@ export default {
       dataReady:false,
       hideG2: false,
       hideG3: false,
+      fujikisekiShowMode: false,
+      fujikisekiShowDifficulty: 1,
       levelDataList:[],
       umamusumeTaskTypeList:[
         {id: 1, name: "育成"},
@@ -559,14 +606,19 @@ export default {
         {id:25, name:'身后迫近的热浪是动力', desc: '速北黑'},
         {id:26, name:'超越那前方的背影', desc: '耐光钻'},
         {id:27, name:'身为新娘！', desc: '速川上公主'},
+        {id:28, name:'独享冰凉？', desc: '速东商变革'},
+        {id:29, name:'心中的烈火无法抑制', desc: '力八重'},
+        {id:30, name:'即使满身泥土，也要追逐梦想', desc: '智内恰'},
+        {id:31, name:'Two Pieces', desc: '速成田白仁'},
+        {id:32, name:'见习魔女与漫漫长夜', desc: '速东商变革'},
       ],
       umamusumeRaceList_1:[
         {id:1401, name:'函馆初级锦标赛',date: '7月后', type: 'GIII'},
         {id:1601, name:'新潟初级锦标赛',date: '8月后', type: 'GIII'},
         {id:1701, name:'札幌初级锦标赛',date: '9月前', type: 'GIII'},
         {id:1702, name:'小仓初级锦标赛',date: '9月前', type: 'GIII'},
-        {id:1902, name:'沙特阿拉伯皇家杯',date: '10月前', type: 'GIII'},
-        {id:2002, name:'阿耳忒米斯锦标赛',date: '10月后', type: 'GIII'},
+        {id:1902, name:'沙漠(沙特阿拉伯)皇家杯',date: '10月前', type: 'GIII'},
+        {id:2002, name:'阿耳忒弥(米)斯锦标赛',date: '10月后', type: 'GIII'},
         {id:2102, name:'京王杯初级锦标赛',date: '11月前', type: 'GII'},
         {id:2103, name:'每日杯初级锦标赛',date: '11月前', type: 'GII'},
         {id:2104, name:'幻想锦标赛',date: '11月前', type: 'GIII'},
@@ -592,14 +644,14 @@ export default {
         {id:3005, name:'每日杯', date: '3月后', type: 'GIII'},
         {id:3103, name:'樱花奖', date: '4月前', type: 'GI'},
         {id:3104, name:'皐月奖', date: '4月前', type: 'GI'},
-        {id:3105, name:'新西兰杯', date: '4月前', type: 'GII'},
+        {id:3105, name:'无翼鸟(新西兰)杯', date: '4月前', type: 'GII'},
         {id:3106, name:'阿灵顿杯', date: '4月前', type: 'GIII'},
         {id:3204, name:'芙洛拉锦标赛', date: '4月后', type: 'GII'},
         {id:3205, name:'青叶奖', date: '4月后', type: 'GII'},
-        {id:3303, name:'NHK 英里杯', date: '5月前', type: 'GI'},
+        {id:3303, name:'广播协会(NHK)英里杯', date: '5月前', type: 'GI'},
         {id:3304, name:'京都新闻杯', date: '5月前', type: 'GII'},
         {id:3403, name:'奥克斯', date: '5月后', type: 'GI'},
-        {id:3404, name:'日本德比 东京优骏', date: '5月后', type: 'GI'},
+        {id:3404, name:'全国(日本)德比 东京优骏', date: '5月后', type: 'GI'},
         {id:3405, name:'葵锦标赛', date: '5月后', type: 'GIII'},
         {id:3504, name:'东京英里赛', date: '6月前', type: 'GI'},
         {id:3506, name:'叶森杯', date: '6月前', type: 'GIII'},
@@ -607,23 +659,23 @@ export default {
         {id:3501, name:'人鱼锦标赛', date: '6月前', type: 'GIII'},
         {id:3608, name:'函馆短途锦标赛', date: '6月后', type: 'GIII'},
         {id:3601, name:'独角兽锦标赛', date: '6月后', type: 'GIII'},
-        {id:3607, name:'宝塚纪念', date: '6月后', type: 'GI'},
+        {id:3607, name:'宝冢(塚)纪念', date: '6月后', type: 'GI'},
         {id:3701, name:'南河三锦标赛', date: '7月前', type: 'GIII'},		
         {id:3708, name:'函馆纪念', date: '7月前', type: 'GIII'},
-        {id:3706, name:'CBC奖', date: '7月前', type: 'GIII'},
+        {id:3706, name:'中部广播(CBC)奖', date: '7月前', type: 'GIII'},
         {id:3707, name:'七夕奖', date: '7月前', type: 'GIII'},
-        {id:3709, name:'广播NIKKEI奖', date: '7月前', type: 'GIII'},
-        {id:3705, name:'日本泥地德比', date: '7月前', type: 'GI'},
-		{id:3801, name:'皇后锦标赛', date: '7月后', type: 'GIII'},
-		{id:3803, name:'中京纪念', date: '7月后', type: 'GIII'},
-		{id:3804, name:'朱鹭夏季冲刺赛', date: '7月后', type: 'GIII'},
-		{id:3901, name:'榆木锦标赛', date: '8月前', type: 'GIII'},
-		{id:3906, name:'小仓纪念', date: '8月前', type: 'GIII'},
-		{id:3907, name:'关屋纪念', date: '8月前', type: 'GIII'},
-		{id:3908, name:'猎豹锦标赛', date: '8月前', type: 'GIII'},
-		{id:4005, name:'札幌纪念', date: '8月后', type: 'GII'},
-		{id:4006, name:'北九州纪念', date: '8月后', type: 'GIII'},
-		{id:4007, name:'科尼杯', date: '8月后', type: 'GIII'},
+        {id:3709, name:'日经广播(广播NIKKEI)奖', date: '7月前', type: 'GIII'},
+        {id:3705, name:'全国(日本)泥地德比', date: '7月前', type: 'GI'},
+        {id:3801, name:'皇后锦标赛', date: '7月后', type: 'GIII'},
+        {id:3803, name:'中京纪念', date: '7月后', type: 'GIII'},
+        {id:3804, name:'朱鹭夏季冲刺赛', date: '7月后', type: 'GIII'},
+        {id:3901, name:'榆木锦标赛', date: '8月前', type: 'GIII'},
+        {id:3906, name:'小仓纪念', date: '8月前', type: 'GIII'},
+        {id:3907, name:'关屋纪念', date: '8月前', type: 'GIII'},
+        {id:3908, name:'猎豹锦标赛', date: '8月前', type: 'GIII'},
+        {id:4005, name:'札幌纪念', date: '8月后', type: 'GII'},
+        {id:4006, name:'北九州纪念', date: '8月后', type: 'GIII'},
+        {id:4007, name:'科尼杯', date: '8月后', type: 'GIII'},
         {id:4101, name:'人马锦标赛', date: '9月前', type: 'GII'},
         {id:4102, name:'玫瑰锦标赛', date: '9月前', type: 'GII'},
         {id:4103, name:'新潟記念', date: '9月前', type: 'GIII'},
@@ -642,24 +694,24 @@ export default {
         {id:4407, name:'天王奖(秋)', date: '10月后', type: 'GI'},
         {id:4408, name:'秋华奖', date: '10月后', type: 'GI'},
         {id:4409, name:'菊花奖', date: '10月后', type: 'GI'},
-		{id:4501, name:'阿根廷杯', date: '11月前', type: 'GII'},
-		{id:4502, name:'都城锦标赛', date: '11月前', type: 'GIII'},
-		{id:4503, name:'武藏野锦标赛', date: '11月前', type: 'GIII'},
-		{id:4504, name:'松浪纪念', date: '11月前', type: 'GIII'},
+        {id:4501, name:'白银(阿根廷)杯', date: '11月前', type: 'GII'},
+        {id:4502, name:'都城锦标赛', date: '11月前', type: 'GIII'},
+        {id:4503, name:'武藏野锦标赛', date: '11月前', type: 'GIII'},
+        {id:4504, name:'松浪纪念', date: '11月前', type: 'GIII'},
         {id:4506, name:'伊丽莎白女王杯', date: '11月前', type: 'GI'},
-        {id:4507, name:'JBC女士经典赛', date: '11月前', type: 'GI'},
-        {id:4508, name:'JBC短途赛', date: '11月前', type: 'GI'},
-        {id:4509, name:'JBC经典赛', date: '11月前', type: 'GI'},
+        {id:4507, name:'全国育成杯(JBC)女士经典赛', date: '11月前', type: 'GI'},
+        {id:4508, name:'全国育成杯(JBC)短途赛', date: '11月前', type: 'GI'},
+        {id:4509, name:'全国育成杯(JBC)经典赛', date: '11月前', type: 'GI'},
         {id:4601, name:'京阪杯', date: '11月后', type: 'GIII'},
-        {id:4607, name:'英里冠军杯', date: '11月后', type: 'GI'},
-        {id:4608, name:'日本杯', date: '11月后', type: 'GI'},
+        {id:4607, name:'英里冠军赛(杯)', date: '11月后', type: 'GI'},
+        {id:4608, name:'全国(日本)杯', date: '11月后', type: 'GI'},
         {id:4701, name:'长途锦标赛', date: '12月前', type: 'GII'},
         {id:4702, name:'挑战杯', date: '12月前', type: 'GIII'},
         {id:4703, name:'中日新闻杯', date: '12月前', type: 'GIII'},
-		{id:4704, name:'五车二锦标赛', date: '12月前', type: 'GIII'},
+		    {id:4704, name:'五车二锦标赛', date: '12月前', type: 'GIII'},
         {id:4705, name:'绿松石锦标赛', date: '12月前', type: 'GIII'},
-        {id:4711, name:'日本冠军杯', date: '12月前', type: 'GI'},
-		{id:4801, name:'阪神杯', date: '12月后', type: 'GII'},
+        {id:4711, name:'全国(日本)冠军杯', date: '12月前', type: 'GI'},
+	    	{id:4801, name:'阪神杯', date: '12月后', type: 'GII'},
         {id:4804, name:'中山大奖赛', date: '12月后', type: 'GI'},
         {id:4805, name:'东京大奖赛', date: '12月后', type: 'GI'},
       ],
@@ -669,7 +721,7 @@ export default {
         {id:4903, name:'中山金杯', date: '1月前', type: 'GIII'},
         {id:4904, name:'爱知杯', date: '1月前', type: 'GIII'},
         {id:5001, name:'东海锦标赛', date: '1月后', type: 'GII'},
-        {id:5002, name:'美国JCC', date: '1月后', type: 'GII'},
+        {id:5002, name:'合众国交流杯(美国JCC)', date: '1月后', type: 'GII'},
         {id:5003, name:'丝绸之路锦标赛', date: '1月后', type: 'GIII'},
         {id:5004, name:'根岸锦标赛', date: '1月后', type: 'GIII'},
         {id:5101, name:'京都纪念', date: '2月前', type: 'GII'},
@@ -678,47 +730,47 @@ export default {
         {id:5202, name:'京都优骏少女锦标赛', date: '2月后', type: 'GIII'},
         {id:5203, name:'钻石锦标赛', date: '2月后', type: 'GIII'},
         {id:5204, name:'小仓大奖赛', date: '2月后', type: 'GIII'},
-		{id:5205, name:'阪急杯', date: '2月后', type: 'GIII'},
+		    {id:5205, name:'阪急杯', date: '2月后', type: 'GIII'},
         {id:5208, name:'二月锦标赛', date: '2月后', type: 'GI'},
         {id:5301, name:'金鯱賞', date: '3月前', type: 'GII'},
         {id:5302, name:'海洋锦标赛', date: '3月前', type: 'GIII'},
         {id:5303, name:'中山优俊少女锦标赛', date: '3月前', type: 'GIII'},
-		{id:5401, name:'阪神大奖赛', date: '3月后', type: 'GII'},
-		{id:5402, name:'日经奖', date: '3月后', type: 'GII'},
+		    {id:5401, name:'阪神大奖赛', date: '3月后', type: 'GII'},
+		    {id:5402, name:'日经奖', date: '3月后', type: 'GII'},
         {id:5403, name:'三月锦标赛', date: '3月后', type: 'GIII'},
         {id:5406, name:'中京短途赛', date: '3月后', type: 'GI'},
         {id:5407, name:'大阪杯', date: '3月后', type: 'GI'},
         {id:5501, name:'阪神优俊少女锦标赛', date: '4月前', type: 'GII'},
-		{id:5502, name:'德比伯爵挑战赛', date: '4月前', type: 'GIII'},
+		    {id:5502, name:'德比伯爵挑战赛', date: '4月前', type: 'GIII'},
         {id:5503, name:'心宿二锦标赛', date: '4月前', type: 'GIII'},
         {id:5601, name:'英里杯', date: '4月后', type: 'GII'},
-		{id:5602, name:'松浪优俊少女锦标赛', date: '4月后', type: 'GIII'},
+		    {id:5602, name:'松浪优俊少女锦标赛', date: '4月后', type: 'GIII'},
         {id:5605, name:'天王奖(春)', date: '4月后', type: 'GI'},
         {id:5701, name:'京王杯春季杯', date: '5月前', type: 'GII'},
         {id:5702, name:'新潟大奖赛', date: '5月前', type: 'GIII'},
         {id:5709, name:'维多利亚英里杯', date: '5月前', type: 'GI'},
         {id:5801, name:'目黑記念', date: '5月后', type: 'GII'},
         {id:5802, name:'平安锦标赛', date: '5月后', type: 'GIII'},
-		{id:5901, name:'人鱼锦标赛', date: '6月前', type: 'GIII'},
+		    {id:5901, name:'人鱼锦标赛', date: '6月前', type: 'GIII'},
         {id:5904, name:'东京英里赛', date: '6月前', type: 'GI'},
-        {id:5905, name:'鳴尾記念', date: '6月前', type: 'GIII'},
-		{id:5906, name:'叶森杯', date: '6月前', type: 'GIII'},
-        {id:6006, name:'宝塚記念', date: '6月后', type: 'GI'},
+        {id:5905, name:'鸣尾(鳴尾)記念', date: '6月前', type: 'GIII'},
+		    {id:5906, name:'叶森杯', date: '6月前', type: 'GIII'},
+        {id:6006, name:'宝冢(塚)記念', date: '6月后', type: 'GI'},
         {id:6007, name:'函館短途锦标赛', date: '6月后', type: 'GIII'},
         {id:6008, name:'帝王奖', date: '6月后', type: 'GI'},
-		{id:6101, name:'南河三锦标赛', date: '7月前', type: 'GIII'},
-		{id:6105, name:'CBC奖', date: '7月前', type: 'GIII'},
-		{id:6106, name:'七夕奖', date: '7月前', type: 'GIII'},
-		{id:6107, name:'函馆纪念', date: '7月前', type: 'GIII'},
-		{id:6201, name:'皇后锦标赛', date: '7月后', type: 'GIII'},
-		{id:6203, name:'中京纪念', date: '7月后', type: 'GIII'},
-		{id:6204, name:'朱鹭夏季冲刺赛', date: '7月后', type: 'GIII'},
-		{id:6301, name:'榆木锦标赛', date: '8月前', type: 'GIII'},
-		{id:6306, name:'小仓纪念', date: '8月前', type: 'GIII'},
-		{id:6307, name:'关屋纪念', date: '8月前', type: 'GIII'},
-		{id:6405, name:'札幌纪念', date: '8月后', type: 'GII'},
-		{id:6406, name:'北九州纪念', date: '8月后', type: 'GIII'},
-		{id:6407, name:'科尼杯', date: '8月后', type: 'GIII'},
+        {id:6101, name:'南河三锦标赛', date: '7月前', type: 'GIII'},
+        {id:6105, name:'中部广播(CBC)奖', date: '7月前', type: 'GIII'},
+        {id:6106, name:'七夕奖', date: '7月前', type: 'GIII'},
+        {id:6107, name:'函馆纪念', date: '7月前', type: 'GIII'},
+        {id:6201, name:'皇后锦标赛', date: '7月后', type: 'GIII'},
+        {id:6203, name:'中京纪念', date: '7月后', type: 'GIII'},
+        {id:6204, name:'朱鹭夏季冲刺赛', date: '7月后', type: 'GIII'},
+        {id:6301, name:'榆木锦标赛', date: '8月前', type: 'GIII'},
+        {id:6306, name:'小仓纪念', date: '8月前', type: 'GIII'},
+        {id:6307, name:'关屋纪念', date: '8月前', type: 'GIII'},
+        {id:6405, name:'札幌纪念', date: '8月后', type: 'GII'},
+        {id:6406, name:'北九州纪念', date: '8月后', type: 'GIII'},
+        {id:6407, name:'科尼杯', date: '8月后', type: 'GIII'},
         {id:6501, name:'人马锦标赛', date: '9月前', type: 'GII'},
         {id:6502, name:'新潟記念', date: '9月前', type: 'GIII'},
         {id:6503, name:'京成杯秋季让磅赛', date: '9月前', type: 'GIII'},
@@ -727,27 +779,27 @@ export default {
         {id:6601, name:'短途者锦标赛', date: '9月后', type: 'GI'},
         {id:6701, name:'每日王冠', date: '10月前', type: 'GII'},
         {id:6702, name:'京都大奖赛', date: '10月前', type: 'GII'},
-		{id:6703, name:'府中优俊少女锦标赛', date: '10月前', type: 'GII'},
+	    	{id:6703, name:'府中优俊少女锦标赛', date: '10月前', type: 'GII'},
         {id:6801, name:'天鹅锦标赛', date: '10月后', type: 'GII'},
         {id:6802, name:'富士锦标赛', date: '10月后', type: 'GII'},
         {id:6807, name:'天王奖(秋)', date: '10月后', type: 'GI'},
-        {id:6901, name:'阿根廷杯', date: '11月前', type: 'GII'},
-		{id:6902, name:'都城锦标赛', date: '11月前', type: 'GIII'},
-		{id:6903, name:'武藏野锦标赛', date: '11月前', type: 'GIII'},
-		{id:6904, name:'松浪纪念', date: '11月前', type: 'GIII'},
+        {id:6901, name:'白银(阿根廷)杯', date: '11月前', type: 'GII'},
+        {id:6902, name:'都城锦标赛', date: '11月前', type: 'GIII'},
+        {id:6903, name:'武藏野锦标赛', date: '11月前', type: 'GIII'},
+        {id:6904, name:'松浪纪念', date: '11月前', type: 'GIII'},
         {id:6906, name:'伊丽莎白女王杯', date: '11月前', type: 'GI'},
-        {id:6907, name:'JBC女士经典赛', date: '11月前', type: 'GI'},
-        {id:6908, name:'JBC短途赛', date: '11月前', type: 'GI'},
-        {id:6909, name:'JBC经典赛', date: '11月前', type: 'GI'},
+        {id:6907, name:'全国育成杯(JBC)女士经典赛', date: '11月前', type: 'GI'},
+        {id:6908, name:'全国育成杯(JBC)短途赛', date: '11月前', type: 'GI'},
+        {id:6909, name:'全国育成杯(JBC)经典赛', date: '11月前', type: 'GI'},
         {id:7001, name:'京阪杯', date: '11月后', type: 'GIII'},
-        {id:7007, name:'英里冠军杯', date: '11月后', type: 'GI'},
-        {id:7008, name:'日本杯', date: '11月后', type: 'GI'},
+        {id:7007, name:'英里冠军赛(杯)', date: '11月后', type: 'GI'},
+        {id:7008, name:'全国(日本)杯', date: '11月后', type: 'GI'},
         {id:7101, name:'长途锦标赛', date: '12月前', type: 'GII'},
-		{id:7102, name:'挑战杯', date: '12月前', type: 'GIII'},
+	    	{id:7102, name:'挑战杯', date: '12月前', type: 'GIII'},
         {id:7103, name:'中日新闻杯', date: '12月前', type: 'GIII'},
-		{id:7104, name:'五车二锦标赛', date: '12月前', type: 'GIII'},
-		{id:7105, name:'绿松石锦标赛', date: '12月前', type: 'GIII'},
-        {id:7111, name:'日本冠军杯', date: '12月前', type: 'GI'},
+	    	{id:7104, name:'五车二锦标赛', date: '12月前', type: 'GIII'},
+		    {id:7105, name:'绿松石锦标赛', date: '12月前', type: 'GIII'},
+        {id:7111, name:'全国(日本)冠军杯', date: '12月前', type: 'GI'},
         {id:7201, name:'阪神杯', date: '12月后', type: 'GII'},
         {id:7204, name:'中山大奖赛', date: '12月后', type: 'GI'},
         {id:7205, name:'东京大奖赛', date: '12月后', type: 'GI'}],
@@ -901,6 +953,11 @@ export default {
       extraWeight1: [0, 0, 0, 0, 0],
       extraWeight2: [0, 0, 0, 0, 0],
       extraWeight3: [0, 0, 0, 0, 0],
+      // 青春杯配置
+      preliminaryRoundSelections: [2, 1, 1, 1],
+      aoharuTeamNameSelection: 4,
+      showAoharuConfigModal: false,
+      // JJC等
       selectedOpponent: 1,
       opponentStamina: 600,
       timeSale: [0, 1, 2],
@@ -950,6 +1007,20 @@ export default {
     switchAdvanceOption: function(){
       this.showAdvanceOption = !this.showAdvanceOption
     },
+    openAoharuConfigModal: function(){
+      this.showAoharuConfigModal = true;
+    },
+    closeAoharuConfigModal: function(){
+      this.showAoharuConfigModal = false;
+    },
+    handleAoharuConfigConfirm: function(data) {
+      this.preliminaryRoundSelections = [...data.preliminaryRoundSelections];
+      this.aoharuTeamNameSelection = data.aoharuTeamNameSelection;
+      this.showAoharuConfigModal = false;
+    },
+    cancelTask: function(){
+      $('#create-task-list-modal').modal('hide');
+    },
     addTask: function (){
       let payload = {
         app_name: "umamusume",
@@ -986,7 +1057,15 @@ export default {
           "allow_recover_tp_diamond": this.recoverTPDiamond,
           "learn_skill_only_user_provided": this.learnSkillOnlyUserProvided,
           "learn_skill_before_race": this.learnSkillBeforeRace,
-          "extra_weight": [this.extraWeight1, this.extraWeight2, this.extraWeight3]
+          "extra_weight": [this.extraWeight1, this.extraWeight2, this.extraWeight3],
+          // 限时: 富士奇石的表演秀
+          "fujikiseki_show_mode": this.fujikisekiShowMode,
+          "fujikiseki_show_difficulty": this.fujikisekiShowDifficulty,
+          // 青春杯配置
+          "aoharu_config": this.selectedScenario.id === 2 ? {
+            "preliminaryRoundSelections": [...this.preliminaryRoundSelections],
+            "aoharuTeamNameSelection": this.aoharuTeamNameSelection
+          } : null
         }
       }
       else if (this.selectedUmamusumeTaskType.id === 2) {
@@ -1022,6 +1101,7 @@ export default {
       )
     },
     applyPresetRace: function(){
+      this.selectedScenario = this.scenarioList[this.presetsUse.scenario - 1 || 0]
       this.extraRace = this.presetsUse.race_list
       this.expectSpeedValue = this.presetsUse.expect_attribute[0]
       this.expectStaminaValue = this.presetsUse.expect_attribute[1]
@@ -1067,7 +1147,7 @@ export default {
       }
       else
       {
-        for (let i = 0; i < this.presetsUse.skill_priority_list.length; i++)
+        for (let i = 0; i < this.presetsUse.skill_priority_list?.length; i++)
         {
           if (i >= this.skillPriorityNum)
           {
@@ -1075,12 +1155,17 @@ export default {
           }
           this.skillLearnPriorityList[i].skills = this.presetsUse.skill_priority_list[i]
         }
-        while(this.skillPriorityNum > this.presetsUse.skill_priority_list.length)
+        while(this.skillPriorityNum > this.presetsUse.skill_priority_list?.length)
         {
           this.deleteBox(0,this.skillPriorityNum-1)
         }
       }
-      
+        // 读取青春杯配置（如果存在）
+      if ('auharuhai_config' in this.presetsUse) 
+      {
+        this.preliminaryRoundSelections = [...this.presetsUse.auharuhai_config.preliminaryRoundSelections];
+        this.aoharuTeamNameSelection = this.presetsUse.auharuhai_config.aoharuTeamNameSelection;
+      }
     },
     getPresets: function(){
       this.axios.post("/umamusume/get-presets", "").then(
@@ -1095,6 +1180,7 @@ export default {
     addPresets: function(){
       let preset = {
         name: this.presetNameEdit,
+        scenario: this.selectedScenario.id,
         race_list: this.extraRace,
         skill_priority_list: [],
         skill_blacklist: this.skillLearnBlacklist,
@@ -1108,6 +1194,13 @@ export default {
         race_tactic_2: this.selectedRaceTactic2,
         race_tactic_3: this.selectedRaceTactic3,
         extraWeight: [this.extraWeight1,this.extraWeight2,this.extraWeight3]
+      }
+      // 仅当选择青春杯剧本时，才保存青春杯配置
+      if (this.selectedScenario.id === 2) {
+        preset.auharuhai_config = {
+          preliminaryRoundSelections: [...this.preliminaryRoundSelections],
+          aoharuTeamNameSelection: this.aoharuTeamNameSelection
+        };
       }
       for(let i = 0; i < this.skillPriorityNum; i++)
       {
@@ -1146,6 +1239,49 @@ export default {
   padding: 0.4rem 0.8rem !important;
   font-size: 1rem !important;
   border-radius: 0.25rem;
+}
+
+/* 取消按钮样式 */
+.cancel-btn {
+  background-color: #dc3545 !important; /* Bootstrap的danger红色 */
+  color: white !important;
+  padding: 0.4rem 0.8rem !important;
+  font-size: 1rem !important;
+  border-radius: 0.25rem;
+  margin-right: 10px; /* 与确认按钮间距 */
+  border: none;
+}
+
+.cancel-btn:hover {
+  background-color: #c82333 !important; /* 悬停时更深的红色 */
+  color: white !important;
+}
+
+/* 确保modal body可以正确滚动 */
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* 遮罩层样式 - 让TaskEditModal背景变暗并阻止交互 */
+.modal-backdrop-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1055; /* 确保在TaskEditModal之上，但在AoharuConfigModal之下 */
+  pointer-events: auto; /* 阻止与背景元素的交互 */
+}
+
+/* 当显示青春杯配置时，让TaskEditModal的内容稍微变暗 */
+#create-task-list-modal.modal.show .modal-content {
+  transition: opacity 0.3s ease;
+}
+
+#create-task-list-modal.modal.show .modal-content.dimmed {
+  opacity: 0.6;
 }
 
 </style>

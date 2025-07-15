@@ -29,7 +29,7 @@ def after_hook(ctx: UmamusumeContext):
                 if detail.turn_info.turn_operation is None:
                     detail.turn_info.turn_operation = get_operation(ctx)
                     if not detail.turn_info.turn_info_logged:
-                        detail.turn_info.log_turn_info(detail.turn_info.turn_operation.turn_operation_type in (
+                        detail.turn_info.log_turn_info(ctx.task.detail.scenario, detail.turn_info.turn_operation.turn_operation_type in (
                             TurnOperationType.TURN_OPERATION_TYPE_TRAINING,
                             TurnOperationType.TURN_OPERATION_TYPE_REST,
                         ))

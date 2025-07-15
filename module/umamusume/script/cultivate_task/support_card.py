@@ -1,5 +1,6 @@
-from module.umamusume.context import SupportCardInfo, TurnInfo, UmamusumeContext
+from module.umamusume.context import  TurnInfo, UmamusumeContext
 from module.umamusume.define import TrainingType, SupportCardType, SupportCardFavorLevel
+from module.umamusume.script.cultivate_task.types import SupportCardInfo
 
 DEFAULT = 0
 
@@ -9,6 +10,18 @@ def get_support_card_score(ctx: UmamusumeContext, info: SupportCardInfo):
         score = SCORE_DICT[info.card_type][info.name](ctx, info)
     else:
         score = SCORE_DICT[info.card_type][DEFAULT](ctx, info)
+
+    # 青春杯友情值提高
+    if info.can_incr_aoharu_train:
+        date = ctx.cultivate_detail.turn_info.date
+        if date <= 24:
+            score += 1
+        elif date <= 48:
+            score += 0.5
+        else:
+            score += 0.1
+        if info.card_type == SupportCardType.SUPPORT_CARD_TYPE_NPC:
+            score /= 2
     return score
 
 

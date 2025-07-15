@@ -1,10 +1,12 @@
 from enum import Enum
 from bot.base.task import Task, TaskExecuteMode
 from bot.base.common import CronJobConfig
+from module.umamusume.define import ScenarioType
+from module.umamusume.script.cultivate_task.scenario.configs import ScenarioConfig, AoharuConfig
 
 
 class TaskDetail:
-    scenario: int
+    scenario: ScenarioType
     expect_attribute: list[int]
     follow_support_card_name: str
     follow_support_card_level: int
@@ -21,6 +23,11 @@ class TaskDetail:
     allow_recover_tp_diamond: bool
     cultivate_progress_info: dict
     extra_weight: list
+    # 剧本相关配置
+    scenario_config: ScenarioConfig
+    # 限时: 富士奇石的表演秀
+    fujikiseki_show_mode: bool
+    fujikiseki_show_difficulty: int
 
     opponent_index: int
     opponent_stamina: int
@@ -55,6 +62,7 @@ class EndTaskReason(Enum):
     NO_REQUESTS = "没人要鞋"
     DAILY_RACED = "日常赛事次数用尽"
     BORROWED = "已无借用次数"
+    SCENARIO_NOT_FOUND = "找不到育成剧本"
 
 
 class UmamusumeTask(Task):
@@ -102,7 +110,13 @@ def build_task(task_execute_mode: TaskExecuteMode, task_type: int,
         td.allow_recover_tp_diamond = attachment_data['allow_recover_tp_diamond']
         td.extra_weight = attachment_data['extra_weight']
         td.cultivate_result = {}
-        td.scenario = attachment_data['scenario']
+        td.scenario = ScenarioType(attachment_data['scenario'])
+        # 剧本相关设置
+        td.scenario_config = ScenarioConfig(aoharu_config=None if (attachment_data['aoharu_config'] is None)
+                                            else AoharuConfig(attachment_data['aoharu_config']))
+        # 限时: 富士奇石的表演秀
+        td.fujikiseki_show_mode = attachment_data['fujikiseki_show_mode']
+        td.fujikiseki_show_difficulty = attachment_data['fujikiseki_show_difficulty']
     elif task_type == 2:
         td.opponent_index = attachment_data['opponent_index']
         td.opponent_stamina = attachment_data['opponent_stamina']

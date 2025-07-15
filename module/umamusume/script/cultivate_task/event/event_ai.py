@@ -5,9 +5,10 @@
 """
 from typing import Iterable
 import bot.base.log as logger
-from module.umamusume.context import (UmamusumeContext, TurnInfo, SkillHint, LearntSkill)
+from module.umamusume.context import UmamusumeContext
 from module.umamusume.define import *
 from module.umamusume.script.cultivate_task.event.parse import EventEffect
+from module.umamusume.script.cultivate_task.types import (TurnInfo, SkillHint, LearntSkill)
 
 log = logger.get_logger(__name__)
 
@@ -167,12 +168,11 @@ def _attribute(ctx: UmamusumeContext) -> float:
 
 
 def _valid_date_list(ctx: UmamusumeContext) -> list[int]:
-    if not hasattr(ctx.task.detail, "scenario") or ctx.task.detail.scenario == '1' \
-            or ctx.task.detail.scenario == 1 or not ctx.task.detail.scenario:
+    if ctx.cultivate_detail.scenario.scenario_type().value in (1, 2):
         valid_dates = list(range(1, 73))
         valid_dates.extend((97, 98, 99))
     else:
-        print("valid_date use origin")
+        log.warning("Unknown scenario, valid_date use origin")
         valid_dates = list(range(1, 73))
     return valid_dates
 

@@ -7,18 +7,19 @@ import numpy
 from bot.recog.image_matcher import image_match, compare_color_equal
 from bot.recog.ocr import ocr_line, find_similar_text
 from module.umamusume.asset.race_data import RACE_LIST
-from module.umamusume.asset.scenario import SCENARIO_LIST
-from module.umamusume.context import UmamusumeContext, SupportCardInfo
+from module.umamusume.asset.scenario import SCENARIO_DICT
+from module.umamusume.context import UmamusumeContext
 from module.umamusume.asset import *
 from module.umamusume.define import *
 from module.umamusume.script.cultivate_task.const import DATE_YEAR, DATE_MONTH
+from module.umamusume.script.cultivate_task.types import SupportCardInfo
 import bot.base.log as logger
 
 log = logger.get_logger(__name__)
 
 
 def parse_date(img, ctx: UmamusumeContext) -> int:
-    sub_img_date = img[35:75, 10:220]
+    sub_img_date = ctx.cultivate_detail.scenario.get_date_img(img)
     sub_img_date = cv2.copyMakeBorder(sub_img_date, 20, 20, 20, 20, cv2.BORDER_CONSTANT, None, (255, 255, 255))
     date_text = ocr_line(sub_img_date)
     year_text = ""
@@ -57,10 +58,11 @@ def parse_date(img, ctx: UmamusumeContext) -> int:
     if month_text != DATE_MONTH[0]:
         date_id = DATE_YEAR.index(year_text) * 24 + DATE_MONTH.index(month_text)
     else:
-        sub_img_turn_to_race = cv2.copyMakeBorder(img[99:158, 13:140], 20, 20, 20, 20, cv2.BORDER_CONSTANT, None,
+        sub_img_turn_to_race = ctx.cultivate_detail.scenario.get_turn_to_race_img(img)
+        sub_img_turn_to_race = cv2.copyMakeBorder(sub_img_turn_to_race, 20, 20, 20, 20, cv2.BORDER_CONSTANT, None,
                                                   (255, 255, 255))
         turn_to_race_text = ocr_line(sub_img_turn_to_race)
-        if turn_to_race_text == "比赛日":
+        if turn_to_race_text in ("比赛", "比赛日"):
             log.debug("出道比赛日")
             return 12
         turn_to_race_text = re.sub("\\D", "", turn_to_race_text)
@@ -208,56 +210,9 @@ def parse_train_main_menu_operations_availability(ctx: UmamusumeContext, img):
 
 
 def parse_training_support_card(ctx: UmamusumeContext, img, train_type: TrainingType):
-    base_x = 590
-    base_y = 190
-    inc = 120
-    for i in range(5):
-        support_card_icon = img[base_y:base_y + 110, base_x: base_x + 105]
-        # 判断好感度
-        support_card_icon = cv2.cvtColor(support_card_icon, cv2.COLOR_BGR2RGB)
-        favor_process_check_list = [support_card_icon[95, 16], support_card_icon[95, 20]]
-        support_card_favor_process = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_UNKNOWN
-        for support_card_favor_process_pos in favor_process_check_list:
-            if compare_color_equal(support_card_favor_process_pos, [255, 235, 120]):
-                support_card_favor_process = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_4
-            elif compare_color_equal(support_card_favor_process_pos, [255, 173, 30]):
-                support_card_favor_process = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_3
-            elif compare_color_equal(support_card_favor_process_pos, [162, 230, 30]):
-                support_card_favor_process = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_2
-            elif (compare_color_equal(support_card_favor_process_pos, [42, 192, 255]) or
-                  compare_color_equal(support_card_favor_process_pos, [109, 108, 117])):
-                support_card_favor_process = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_1
-            if support_card_favor_process != SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_UNKNOWN:
-                break
-
-        # 判断是否有事件
-        support_card_event_pos = support_card_icon[5, 83]
-        support_card_event_available = False
-        if (support_card_event_pos[0] >= 250
-                and 55 <= support_card_event_pos[1] <= 90
-                and 115 <= support_card_event_pos[2] <= 150):
-            support_card_event_available = True
-        # 判断支援卡类型
-        support_card_type = SupportCardType.SUPPORT_CARD_TYPE_UNKNOWN
-        support_card_icon = cv2.cvtColor(support_card_icon, cv2.COLOR_RGB2GRAY)
-        if image_match(support_card_icon, REF_SUPPORT_CARD_TYPE_SPEED).find_match:
-            support_card_type = SupportCardType.SUPPORT_CARD_TYPE_SPEED
-        elif image_match(support_card_icon, REF_SUPPORT_CARD_TYPE_STAMINA).find_match:
-            support_card_type = SupportCardType.SUPPORT_CARD_TYPE_STAMINA
-        elif image_match(support_card_icon, REF_SUPPORT_CARD_TYPE_POWER).find_match:
-            support_card_type = SupportCardType.SUPPORT_CARD_TYPE_POWER
-        elif image_match(support_card_icon, REF_SUPPORT_CARD_TYPE_WILL).find_match:
-            support_card_type = SupportCardType.SUPPORT_CARD_TYPE_WILL
-        elif image_match(support_card_icon, REF_SUPPORT_CARD_TYPE_INTELLIGENCE).find_match:
-            support_card_type = SupportCardType.SUPPORT_CARD_TYPE_INTELLIGENCE
-        elif image_match(support_card_icon, REF_SUPPORT_CARD_TYPE_FRIEND).find_match:
-            support_card_type = SupportCardType.SUPPORT_CARD_TYPE_FRIEND
-        if support_card_favor_process is not SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_UNKNOWN:
-            info = SupportCardInfo(card_type=support_card_type,
-                                   favor=support_card_favor_process,
-                                   has_event=support_card_event_available)
-            ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].support_card_info_list.append(info)
-        base_y += inc
+    support_card_info_list = ctx.cultivate_detail.scenario.parse_training_support_card(img)
+    ctx.cultivate_detail.turn_info.training_info_list[
+        train_type.value - 1].support_card_info_list = support_card_info_list
 
 
 def parse_train_type(ctx: UmamusumeContext, img) -> TrainingType:
@@ -277,56 +232,16 @@ def parse_train_type(ctx: UmamusumeContext, img) -> TrainingType:
 
 
 def parse_training_result(ctx: UmamusumeContext, img, train_type: TrainingType):
-    sub_img_speed_incr = img[770:826, 30:140]
-    speed_incr_text = ocr_line(sub_img_speed_incr)
-    speed_incr_text = re.sub("\\D", "", speed_incr_text)
+    train_incr = ctx.cultivate_detail.scenario.parse_training_result(img, train_type)
+    log.debug(train_incr)
 
-    sub_img_stamina_incr = img[770:826, 140:250]
-    stamina_incr_text = ocr_line(sub_img_stamina_incr)
-    stamina_incr_text = re.sub("\\D", "", stamina_incr_text)
-
-    sub_img_power_incr = img[770:826, 250:360]
-    power_incr_text = ocr_line(sub_img_power_incr)
-    power_incr_text = re.sub("\\D", "", power_incr_text)
-
-    sub_img_will_incr = img[770:826, 360:470]
-    will_incr_text = ocr_line(sub_img_will_incr)
-    will_incr_text = re.sub("\\D", "", will_incr_text)
-
-    sub_img_intelligence_incr = img[770:826, 470:580]
-    intelligence_incr_text = ocr_line(sub_img_intelligence_incr)
-    intelligence_incr_text = re.sub("\\D", "", intelligence_incr_text)
-
-    sub_img_skill_point_incr = img[770:826, 588:695]
-    skill_point_incr_text = ocr_line(sub_img_skill_point_incr)
-    skill_point_incr_text = re.sub("\\D", "", skill_point_incr_text)
-
-    failure_rate_basis_point = [105, 233, 360, 487, 615][train_type.value -1]
-    sub_img_failure_rate = img[920:960, failure_rate_basis_point:failure_rate_basis_point+65]
-    failure_rate_text = ocr_line(sub_img_failure_rate)
-    failure_rate_text = re.sub("\\D", "", failure_rate_text)
-
-    if speed_incr_text != "":
-        ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].speed_incr = int(
-            speed_incr_text)
-    if stamina_incr_text != "":
-        ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].stamina_incr = int(
-            stamina_incr_text)
-    if power_incr_text != "":
-        ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].power_incr = int(
-            power_incr_text)
-    if will_incr_text != "":
-        ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].will_incr = int(
-            will_incr_text)
-    if intelligence_incr_text != "":
-        ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].intelligence_incr = int(
-            intelligence_incr_text)
-    if skill_point_incr_text != "":
-        ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].skill_point_incr = int(
-            skill_point_incr_text)
-    if failure_rate_text != "":
-        ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].failure_rate = int(
-            failure_rate_text)
+    ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].speed_incr = train_incr[0]
+    ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].stamina_incr = train_incr[1]
+    ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].power_incr = train_incr[2]
+    ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].will_incr = train_incr[3]
+    ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].intelligence_incr = train_incr[4]
+    ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].skill_point_incr = train_incr[5]
+    ctx.cultivate_detail.turn_info.training_info_list[train_type.value - 1].failure_rate = train_incr[6]
 
 
 def find_support_card(ctx: UmamusumeContext, img):
@@ -404,14 +319,14 @@ def find_race(ctx: UmamusumeContext, img, race_id: int = 0) -> bool:
     return False
 
 
-def find_scenario(ctx: UmamusumeContext, img, scenario_id: int = 0) -> bool:
+def find_scenario(ctx: UmamusumeContext, img, scenario_type: ScenarioType) -> bool:
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    target_race_template = SCENARIO_LIST[scenario_id][2]
+    target_race_template = SCENARIO_DICT[scenario_type][2]
     if target_race_template is not None:
         if image_match(img, target_race_template).find_match:
             return True
     ctx.ctrl.click(700, 585,
-                   "寻找剧本：" + str(SCENARIO_LIST[scenario_id][1]))
+                   "不是剧本%s，查看下一个剧本" % str(SCENARIO_DICT[scenario_type][1]))
     return False
 
 

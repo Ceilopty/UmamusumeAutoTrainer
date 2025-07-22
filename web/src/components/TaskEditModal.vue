@@ -2,8 +2,11 @@
   <div id="create-task-list-modal" class="modal fade" data-backdrop="static" data-keyboard="false">
     <div  class="modal-dialog modal-dialog-centered modal-xl">
       <div class="modal-content" :class="{ 'dimmed': showAoharuConfigModal }">
-        <h5 class="modal-header">
+        <h5 v-if="!task2Amend" class="modal-header">
           新建任务
+        </h5>
+        <h5 v-if="task2Amend?.task_status === 1 || task2Amend?.task_status === 3 || task2Amend?.task_status === 6" class="modal-header">
+          修改任务
         </h5>
         <div class="modal-body">
           <form>
@@ -521,6 +524,7 @@ export default {
     SkillIcon,
     AoharuConfigModal
   },
+  props:["task2Amend"],
   data:function () {
     return{
       showAdvanceOption:false,
@@ -1021,7 +1025,7 @@ export default {
     cancelTask: function(){
       $('#create-task-list-modal').modal('hide');
     },
-    addTask: function (){
+    addTask: function (send=true,former_task=0){
       let payload = {
         app_name: "umamusume",
         task_execute_mode: this.selectedExecuteMode,
@@ -1030,7 +1034,7 @@ export default {
         attachment_data: {},
         cron_job_config: {},
       }
-      if (this.selectedUmamusumeTaskType.id === 1) {
+      if (this.selectedUmamusumeTaskType.id === 1 || former_task === 1) {
         var learn_skill_list = []
         for (let i = 0; i < this.skillPriorityNum; i++)
         {
@@ -1068,19 +1072,19 @@ export default {
           } : null
         }
       }
-      else if (this.selectedUmamusumeTaskType.id === 2) {
+      else if (this.selectedUmamusumeTaskType.id === 2 || former_task === 2) {
         payload.attachment_data = {
           "opponent_index": this.selectedOpponent,
           "opponent_stamina": this.opponentStamina,
           "time_sale": this.timeSale
         }
       }
-      else if (this.selectedUmamusumeTaskType.id === 3) {
+      else if (this.selectedUmamusumeTaskType.id === 3 || former_task === 3) {
         payload.attachment_data = {
           "ask_shoe_type": this.askShoeType
         }
       }
-      else if (this.selectedUmamusumeTaskType.id === 4) {
+      else if (this.selectedUmamusumeTaskType.id === 4 || former_task === 4) {
         payload.attachment_data = {
           "daily_race_type": this.selectedDailyRace,
           "daily_race_difficulty": this.selectedDailyRaceDifficulty,
@@ -1094,11 +1098,37 @@ export default {
       }
       payload.attachment_data.device_name = this.device_name
       console.log(JSON.stringify(payload))
-      this.axios.post("/task", this.selectedUmamusumeTaskType.id === 0?this.my_script:JSON.stringify(payload)).then(
-          ()=>{
-            $('#create-task-list-modal').modal('hide');
+      if (send){
+        // 修改任务
+        if (this.task2Amend){
+          if( this.selectedUmamusumeTaskType.id === 0){
+            try{
+              payload = JSON.parse(this.my_script)
+            }catch(err){
+              console.log(err.message)
+            }
           }
-      )
+          payload.task_id = this.task2Amend.task_id
+          this.axios.post("/action/bot/amend-task", JSON.stringify(payload)).then(
+            ()=>{
+              $('#create-task-list-modal').modal('hide');
+            }
+          )
+        }
+        // 新建任务
+        else{
+          this.axios.post("/task", this.selectedUmamusumeTaskType.id === 0?this.my_script:JSON.stringify(payload)).then(
+            ()=>{
+              $('#create-task-list-modal').modal('hide');
+            }
+          )
+        }
+      } // if(send)
+      else{
+        payload.task_type = former_task
+        payload.task_desc = this.umamusumeTaskTypeList.find(task_type=>task_type.id===former_task).name
+        this.my_script = JSON.stringify(payload)
+      }
     },
     applyPresetRace: function(){
       this.selectedScenario = this.scenarioList[this.presetsUse.scenario - 1 || 0]
@@ -1219,11 +1249,94 @@ export default {
           this.getPresets()
         } 
       )
+    },
+    fill: function(task){
+      if (task){
+        //console.log(task.task_id)
+        this.selectedExecuteMode = task.task_execute_mode
+        // 定时任务
+        if(this.selectedExecuteMode === 2){
+           this.cron = task.cron_job_config.cron
+        }
+        this.device_name = task.device_name
+        this.selectedUmamusumeTaskType = this.umamusumeTaskTypeList.find((type)=>type.id===task.task_type)
+        // 育成
+        if (task.task_type ===1){
+          while(this.skillPriorityNum<task.detail.learn_skill_list.length){
+            this.addBox() 
+          }
+          while(this.skillPriorityNum>task.detail.learn_skill_list.length){
+            this.deleteBox(0,this.skillPriorityNum-1)
+          }
+          for(let i = 0; i < this.skillPriorityNum; i++){
+            this.skillLearnPriorityList[i].skills = task.detail.learn_skill_list[i].filter((x)=>x!=="").join()
+          }
+          this.skillLearnBlacklist = task.detail.learn_skill_blacklist.filter((x)=>x!=="").join()
+          this.selectedScenario = this.scenarioList.find((scenario)=>scenario.id===task.detail.scenario)
+          // 青春杯加载细节
+          if (task.detail.scenario === 2){
+            this.aoharuTeamNameSelection = task.detail.scenario_config.aoharu_config.aoharu_team_name_selection
+            this.preliminaryRoundSelections = [...task.detail.scenario_config.aoharu_config.preliminary_round_selections]
+          }
+          [this.expectSpeedValue, this.expectStaminaValue, this.expectPowerValue, this.expectWillValue, this.expectIntelligenceValue] = task.detail.expect_attribute
+          this.selectedSupportCard = this.umausumeSupportCardList.find(card=>card.name===task.detail.follow_support_card_name)
+          this.supportCardLevel = task.detail.follow_support_card_level
+          this.extraRace = [...task.detail.extra_race_list.sort((a,b)=>a-b)];
+          [this.selectedRaceTactic1, this.selectedRaceTactic2, this.selectedRaceTactic3] = [...task.detail.tactic_list];
+          this.clockUseLimit = task.detail.clock_use_limit
+          this.clockUseDayLimit = task.detail.clock_use_day_limit
+          this.learnSkillThreshold = task.detail.learn_skill_threshold
+          this.recoverTPDrink = task.detail.allow_recover_tp_drink
+          this.recoverTPDiamond = task.detail.allow_recover_tp_diamond
+          this.learnSkillOnlyUserProvided = task.detail.learn_skill_only_user_provided
+          this.learnSkillBeforeRace = task.detail.learn_skill_before_race
+          this.extraWeight1 = [...task.detail.extra_weight[0]]
+          this.extraWeight2 = [...task.detail.extra_weight[1]]
+          this.extraWeight3 = [...task.detail.extra_weight[2]]
+          // 限时: 富士奇石的表演秀
+          this.fujikisekiShowMode = task.detail.fujikiseki_show_mode
+          this.fujikisekiShowDifficulty = task.detail.fujikiseki_show_difficulty
+          //console.log(task)
+        }
+        // JJC
+        else if(task.task_type ===2){
+          this.selectedOpponent = task.detail.opponent_index
+          this.opponentStamina = task.detail.opponent_stamina
+          this.timeSale = [...task.detail.time_sale.sort((a,b)=>a-b)]
+        }
+        // 捐献
+        else if(task.task_type ===3){
+          this.askShoeType = task.detail.ask_shoe_type
+        }
+        // 日常赛事
+        else if(task.task_type ===4){
+          this.selectedDailyRace = task.detail.daily_race_type
+          this.selectedDailyRaceDifficulty = task.detail.daily_race_difficulty
+          this.timeSale = [...task.detail.time_sale.sort((a,b)=>a-b)]
+        }
+      }
+      // 新建任务 为方便复制，不做任何修改
+      else {
+        //this.initSelect()
+      }
     }
   },
   watch:{
-
-  }
+    task2Amend(newVal){
+      clearTimeout(this.timer)
+      this.timer = setTimeout(async () =>{
+        this.fill(newVal)
+      }, 300)
+    },
+    selectedUmamusumeTaskType(newVal, oldVar){
+      clearTimeout(this.timer)
+      this.timer = setTimeout(async () =>{
+        if (newVal.id === 0 && oldVar.id !== 0){
+          this.addTask(false, oldVar.id)
+        }
+      }, 300)
+    },
+  },
 }
 </script>
 

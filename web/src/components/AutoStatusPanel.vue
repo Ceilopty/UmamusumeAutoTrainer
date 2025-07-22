@@ -6,7 +6,7 @@
           <h5 class="card-title">UAT</h5>
           <span v-on:click="autoStart"  class="ml-auto btn auto-btn">启动</span>
           <span v-on:click="autoStop" class="btn auto-btn" >停止</span>
-          <span class="btn auto-btn" data-target="#create-task-list-modal" data-toggle="modal">创建任务</span>
+          <span  @click="createTask" class="btn auto-btn">创建任务</span>
         </div>
       </div>
     </div>
@@ -16,6 +16,7 @@
 <script>
 export default {
   name: "AutoStatusPanel",
+  inject:["schedulerpanel"],
   methods:{
     autoStart:function (){
       this.axios.post("/action/bot/start").then(
@@ -28,7 +29,11 @@ export default {
           ()=>{
           }
       )
-    }
+    },
+    createTask:function (){
+      this.schedulerpanel.task = null
+      $('#create-task-list-modal').modal('show')
+    },
   }
 }
 </script>

@@ -29,8 +29,11 @@ def add_task(req: AddTaskRequest | list[AddTaskRequest]):
 
 
 @server.delete("/task")
-def delete_task(req: DeleteTaskRequest):
-    bot_ctrl.delete_task(req.task_id)
+def delete_task(req: DeleteTaskRequest | list[DeleteTaskRequest]):
+    if isinstance(req, DeleteTaskRequest):
+        req = [req]
+    for req in req:
+        bot_ctrl.delete_task(req.task_id)
 
 
 @server.get("/task")
@@ -46,6 +49,12 @@ def get_task_log(task_id):
 @server.post("/action/bot/reset-task")
 def reset_task(req: ResetTaskRequest):
     bot_ctrl.reset_task(req.task_id)
+
+
+@server.post("/action/bot/amend-task")
+def amend_task(req: AmendTaskRequest):
+    bot_ctrl.amend_task(req.task_id, req.app_name, req.task_execute_mode, req.task_type, req.task_desc,
+                        req.cron_job_config, req.attachment_data)
 
 
 @server.post("/action/bot/start")

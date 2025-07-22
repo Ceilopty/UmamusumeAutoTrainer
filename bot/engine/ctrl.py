@@ -26,3 +26,10 @@ def get_task_list():
 
 def reset_task(task_id):
     scheduler.reset_task(task_id)
+
+
+def amend_task(task_id, app_name, task_execute_mode, task_type, task_desc, cron_job_config, attachment_data):
+    app_config = APP_MANIFEST_LIST[app_name]
+    task = app_config.build_task(task_execute_mode, task_type, task_desc, cron_job_config, attachment_data)
+    task.task_id = task_id
+    scheduler.amend_task(task)

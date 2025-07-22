@@ -34,3 +34,12 @@ class ResetTaskRequest(BaseModel):
     task_id: str
 
 
+# 修改任务
+class AmendTaskRequest(BaseModel):
+    task_id: str
+    app_name: str
+    task_execute_mode: TaskExecuteMode
+    task_type: int
+    task_desc: str
+    attachment_data: object
+    cron_job_config: Union[object, None] = None

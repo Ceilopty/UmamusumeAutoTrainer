@@ -45,6 +45,18 @@ class Scheduler:
         else:
             return False
 
+    def amend_task(self, task):
+        amend_idx = -1
+        task_id = task.task_id
+        for i, v in enumerate(self.task_list):
+            if v.task_id == task_id:
+                amend_idx = i
+        if amend_idx != -1:
+            self.task_list[amend_idx] = task
+            return True
+        else:
+            return False
+
     def init(self):
         task_executor = executor.Executor()
         while True:
@@ -80,7 +92,7 @@ class Scheduler:
         new_task.task_id = str(int(round(time.time() * 1000)))
         if (to_task_execute_mode == TaskExecuteMode.TASK_EXECUTE_MODE_ONE_TIME and task.task_execute_mode ==
                 TaskExecuteMode.TASK_EXECUTE_MODE_CRON_JOB):
-            new_task.task_id = "CRONJOB_" + new_task.task_id
+            new_task.task_id = "CRONJOB_" + new_task.task_id + "_FROM_" + task.task_id
             new_task.cron_job_config = None
         new_task.task_execute_mode = to_task_execute_mode
         if new_task.task_execute_mode == TaskExecuteMode.TASK_EXECUTE_MODE_ONE_TIME:

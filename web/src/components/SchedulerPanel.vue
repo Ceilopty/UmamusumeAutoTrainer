@@ -20,7 +20,7 @@
       <history-task-list v-bind:history-task-list="historyTaskList"></history-task-list>
     </div>
     <div class="part">
-      <task-edit-modal></task-edit-modal>
+      <task-edit-modal :task2Amend="task"></task-edit-modal>
     </div>
 <!--    {{this.taskList}}-->
 
@@ -40,9 +40,14 @@ export default {
   props:["runningTask", "waitingTaskList", "historyTaskList", "cronJobList"],
   data:function (){
     return {
+      task: null
     }
   },
-
+  provide() {
+    return {
+      schedulerpanel: this
+    };
+  },
 }
 </script>
 

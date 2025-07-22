@@ -8,6 +8,8 @@
         <div v-if="task.task_execute_mode === 2" class="small time">下次执行时间：{{task.cron_job_config?.next_time}} ({{task.cron_job_config?.cron}})</div>
       </div>
       <div class="btn-group float-right" role="group" aria-label="Basic example">
+        <button v-if="task.task_status === 1 || task.task_status === 3 || task.task_status === 6"
+         type="button" class="btn auto-btn" v-on:click="amendTask">修改</button>
         <button type="button" class="btn auto-btn" v-on:click="resetTask">重置</button>
         <button type="button" class="btn auto-btn" v-on:click="deleteTask">删除</button>
       </div>
@@ -28,7 +30,12 @@ export default {
   name: "TaskDetailInfoHandler",
   components: {UmamusumeTaskDetailInfo},
   props: ["task"],
+  inject: ["schedulerpanel"],
   methods: {
+    amendTask: function (){
+      this.schedulerpanel.task = this.task
+      $('#create-task-list-modal').modal('show')
+    },
     resetTask: function (){
       let payload = {
         task_id: this.task.task_id

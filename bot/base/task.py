@@ -47,7 +47,7 @@ class Task(metaclass=ABCMeta):
 
     def __init__(self, app_name: str, task_execute_mode: TaskExecuteMode, task_type,
                  task_desc: str, cron_job_config: CronJobConfig = None):
-        self.task_id = "".join(random.sample(ALPHA, 5)) + str(int(time.time()))
+        self.task_id = "".join(random.sample(ALPHA, 5)) + str(int(time.time() * 1000))
         self.app_name = app_name
         self.task_execute_mode = task_execute_mode
         self.task_type = task_type

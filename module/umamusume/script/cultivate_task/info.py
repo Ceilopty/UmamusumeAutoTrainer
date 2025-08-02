@@ -59,6 +59,9 @@ TITLE = [
     # 青春杯
     "自动编成",
     "对战确认",
+    # 训练员技能考试
+    "选择养成模式",
+    "活动首页跳转确认",
 ]
 
 
@@ -208,6 +211,12 @@ def script_info(ctx: UmamusumeContext):
         if title_text == TITLE[39]:
             # 确认青春杯对手
             ctx.ctrl.click(520, 920, "确认对战")
+        if title_text == TITLE[40]:
+            # 确认训练员技能考试养成模式
+            ctx.ctrl.click(520, 1180, "确认养成模式")
+        if title_text == TITLE[41]:
+            # 活动首页跳转确认
+            ctx.ctrl.click(200, 835, "取消跳转活动首页")
         if title_text not in TITLE and title_text in COMMON_INFO:
             COMMON_INFO[title_text](ctx)
         time.sleep(1)

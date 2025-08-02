@@ -38,6 +38,13 @@ class TaskLogHandler(logging.Handler):
             log_text = localization(self.format(record))
             with self.lock:
                 self.buffer[self.task_id].append(log_text)
+        if hasattr(record, "end_task_id"):
+            self.task_id = record.task_id = None
+            with self.lock:
+                logs = self.buffer.pop(record.end_task_id, None)
+                self.buffer.clear()
+                if logs:
+                    self.buffer[record.end_task_id] = logs
 
     def get_task_log(self, task_id):
         with self.lock:

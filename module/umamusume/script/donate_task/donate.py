@@ -55,6 +55,10 @@ def script_guild_home(ctx: UmamusumeContext):
     ctx.ctrl.click_by_point(GO_HOME_FROM_GUILD)
 
 
+def script_circle_ranking_result(ctx: UmamusumeContext):
+    ctx.ctrl.click(360, 1180, "关闭结果")
+
+
 def script_donate_requests(ctx: UmamusumeContext):
     """
     道具捐赠请求
@@ -63,7 +67,7 @@ def script_donate_requests(ctx: UmamusumeContext):
     1、刚刚点进捐鞋列表的画面，寻找点亮的“捐赠”，点下去。若没有则往下滑。
       若有灰色“捐赠”，则今日捐满，若找不到亮“捐赠”，认为没有可捐的了。
     2、点捐赠请求（要鞋），如果显示捐鞋未满8小时，设置为7.5小时前“已要”。
-    3、点捐赠请求（要鞋），如果达上限已结束，设置为7.5小时前“已要”。
+    3、点捐赠请求（要鞋），如果达上限已结束，设置为8小时前“已要”。
     4、点捐赠请求（要鞋），如果显示时间已到，设置为8小时前“已要”。
     5、点捐赠请求（要鞋），如果显示剩余X小时，设置为X小时前“已要”。
     6、正常进入选鞋界面，底部应有“请选择需求道具”，根据任务设置点击。
@@ -79,7 +83,7 @@ def script_donate_requests(ctx: UmamusumeContext):
         return
     # 情况3：已要，刚满
     if image_match(img, REF_DONATE_ASKED_CLOSED).find_match:
-        set_timestamp(ctx, 'asked', -3600*7.5)
+        set_timestamp(ctx, 'asked', -3600*8)
         ctx.ctrl.click_by_point(DONATE_RETURN_FROM_REQ)
         return
     # 情况4：已要，超时
@@ -87,14 +91,14 @@ def script_donate_requests(ctx: UmamusumeContext):
         set_timestamp(ctx, 'asked', -3600 * 8)
         ctx.ctrl.click_by_point(DONATE_RETURN_FROM_REQ)
         return
-    # 情况4：已要，未满，解析剩余时间
+    # 情况5：已要，未满，解析剩余时间
     if image_match(img, REF_DONATE_ASKED_INCOMPLETE).find_match:
         offset = re.sub("\\D", "", ocr_line(img[1090:1120, 435:460]))
         offset = 3600*(int(offset)-8) if offset else None
         set_timestamp(ctx, 'asked', offset)
         ctx.ctrl.click_by_point(DONATE_RETURN_FROM_REQ)
         return
-    # 情况5：选鞋 doublecheck
+    # 情况6：选鞋 doublecheck
     if image_match(img, REF_DONATE_ASKING).find_match:
         index = ctx.donate_detail.ask_shoe_type or random.randint(1, 5)
         ctx.ctrl.click_by_point(ASK_SHOES[index - 1])
@@ -102,7 +106,7 @@ def script_donate_requests(ctx: UmamusumeContext):
         ctx.ctrl.click_by_point(ASK_SHOES[index - 1])
         ctx.ctrl.click_by_point(DONATE_ASK_SELECTED)
         return
-    # 情况6: 要鞋确认
+    # 情况7: 要鞋确认
     if image_match(img, REF_DONATE_ASK_CONFIRM).find_match:
         ctx.ctrl.click_by_point(DONATE_ASK_CONFIRM)
         ctx.donate_detail.asked = True
@@ -180,15 +184,18 @@ def on_task(ctx: UmamusumeContext):
 
 def parse_scrollable(ctx: UmamusumeContext):
     img = cv2.cvtColor(ctx.current_screen, cv2.COLOR_BGR2RGB)
-    base_x, base_y_top, base_y_bot = 695, 115, 1105
+    base_x, base_y_top, base_y_bot = 693, 114, 1102
     bright = [211, 209, 219]
     dark = [125, 120, 142]
     bg = [241, 241, 241]
-    top, bottom = (list(compare_color_equal(img[base_y, base_x], target)
-                        for target in (bright, dark, bg)
-                        ) for base_y in (base_y_top, base_y_bot))
+    top, bottom = (tuple(compare_color_equal(img[base_y, base_x], target)
+                         for target in (bright, dark, bg)
+                         ) for base_y in (base_y_top, base_y_bot))
+    """# match不太好用
     match top, bottom:
         case (_, _, bool(x)), (_, _, bool(y)) if x or y:
+            return 0
+        case (False, False, True), (False, False, True):
             return 0
         case (True, False, False), (False, True, False):
             return 1  # 上浅下深，往下滑往前翻
@@ -197,3 +204,16 @@ def parse_scrollable(ctx: UmamusumeContext):
         case _:
             print(top, bottom)  # DEBUG
             print(list(img[base_y, base_x] for base_y in (base_y_top, base_y_bot)))
+            cv2.imwrite(f'./userdata/{time.time()}_{top}x{bottom}_{list(img[base_y, base_x] for base_y in (base_y_top, base_y_bot))}.png',ctx.current_screen)
+    """
+    if any(top) and any(bottom):
+        top, bottom = top.index(True), bottom.index(True)
+        match top, bottom:
+            case (2, _) | (_, 2):
+                return 0
+            case 0, 1:
+                return 1
+            case 1, 0:
+                return -1
+            case _:
+                return random.randint(0, 1) * 2 - 1

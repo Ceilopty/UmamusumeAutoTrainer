@@ -60,7 +60,8 @@ class Task(metaclass=ABCMeta):
 
     @abstractmethod
     def end_task(self, status: TaskStatus, reason: EndTaskReason) -> None:
-        log.info("任务结束：" + self.task_status.name + "->" + status.name + "" + reason.value)
+        log.info("任务结束：" + self.task_status.name + "->" + status.name + "" + reason.value,
+                 extra={"end_task_id": self.task_id})
         self.task_status = status
         self.end_task_reason = reason
 

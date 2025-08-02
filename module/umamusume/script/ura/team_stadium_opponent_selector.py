@@ -24,8 +24,8 @@ def ura_select_opponent(ctx: UmamusumeContext):
     except FileNotFoundError:
         log.warning("未发现团队竞技场信息，使用原始方法。")
         return
-    target = ctx.team_stadium_detail.opponent_index
-    stamina = ctx.team_stadium_detail.opponent_stamina
+    target = ctx.task.detail.opponent_index
+    stamina = ctx.task.detail.opponent_stamina
     average = list(list(sum(x := list(chara[attr] for chara in opponent if chara))/len(x)
                         for attr in range(5)) for opponent in ura_info['attribute'])
     stamina_list = list(opponent[1] for opponent in average)

@@ -100,7 +100,7 @@ def script_donate_requests(ctx: UmamusumeContext):
         return
     # 情况6：选鞋 doublecheck
     if image_match(img, REF_DONATE_ASKING).find_match:
-        index = ctx.donate_detail.ask_shoe_type or random.randint(1, 5)
+        index = ctx.task.detail.ask_shoe_type or random.randint(1, 5)
         ctx.ctrl.click_by_point(ASK_SHOES[index - 1])
         time.sleep(0.5)
         ctx.ctrl.click_by_point(ASK_SHOES[index - 1])
@@ -188,7 +188,7 @@ def parse_scrollable(ctx: UmamusumeContext):
     bright = [211, 209, 219]
     dark = [125, 120, 142]
     bg = [241, 241, 241]
-    top, bottom = (tuple(compare_color_equal(img[base_y, base_x], target)
+    top, bottom = (tuple(compare_color_equal(img[base_y, base_x].tolist(), target)
                          for target in (bright, dark, bg)
                          ) for base_y in (base_y_top, base_y_bot))
     """# match不太好用
@@ -204,7 +204,9 @@ def parse_scrollable(ctx: UmamusumeContext):
         case _:
             print(top, bottom)  # DEBUG
             print(list(img[base_y, base_x] for base_y in (base_y_top, base_y_bot)))
-            cv2.imwrite(f'./userdata/{time.time()}_{top}x{bottom}_{list(img[base_y, base_x] for base_y in (base_y_top, base_y_bot))}.png',ctx.current_screen)
+            cv2.imwrite(f'./userdata/{time.time()}_{top}x{bottom}_{list(img[base_y, base_x] 
+                                                                        for base_y in (base_y_top, base_y_bot))}.png',
+                        ctx.current_screen)
     """
     if any(top) and any(bottom):
         top, bottom = top.index(True), bottom.index(True)
@@ -216,4 +218,7 @@ def parse_scrollable(ctx: UmamusumeContext):
             case 1, 0:
                 return -1
             case _:
+                cv2.imwrite(f'''./userdata/{time.time()}_{top}x{bottom}_{
+                            list(img[base_y, base_x] for base_y in (base_y_top, base_y_bot))}.png''',
+                            ctx.current_screen)
                 return random.randint(0, 1) * 2 - 1

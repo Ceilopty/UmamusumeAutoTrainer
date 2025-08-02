@@ -114,7 +114,8 @@ class TurnInfoAoharu(TurnInfo):
     friendship_noncard_yayoi: int
     friendship_noncard_reporter: int
     friend_cardId: int
-    friend_personId:int
+    friend_personId: int
+
 
 class TurnInfoBase(TurnInfo):
     umaStar: int

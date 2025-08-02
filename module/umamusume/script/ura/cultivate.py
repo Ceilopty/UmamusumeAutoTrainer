@@ -210,7 +210,7 @@ def ura_parse_skills(ctx: UmamusumeContext, info: TurnInfo):
 
     before_race_learnt = True
     for need_learn in (DataBase.get_skill_by_name(need_learn)
-                       for level in ctx.cultivate_detail.learn_skill_list[0:1]
+                       for level in ctx.task.detail.learn_skill_list[0:1]
                        for need_learn in level):
         if (need_learn is not None and
            [x for x in skill_hint_list if x.group_id == need_learn.group_id and x.rarity == need_learn.rarity] and

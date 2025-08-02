@@ -3,15 +3,15 @@ from datetime import datetime as dt
 import cv2
 import croniter
 
-from bot.base.task import TaskStatus, EndTaskReason
-from module.umamusume.task import EndTaskReason as UEndTaskReason
+# from bot.base.task import TaskStatus, EndTaskReason
+# from module.umamusume.task import EndTaskReason as UEndTaskReason
 from bot.recog.image_matcher import image_match
 from bot.recog.ocr import ocr_line, find_similar_text
 from module.umamusume.asset.point import *
 from module.umamusume.asset.ui import INFO
 from module.umamusume.context import UmamusumeContext
 from module.umamusume.script.common.info import TITLE as COMMON_INFO
-from module.umamusume.script.cultivate_task.parse import compare_color_equal
+# from module.umamusume.script.cultivate_task.parse import compare_color_equal
 import bot.base.log as logger
 
 log = logger.get_logger(__name__)
@@ -93,16 +93,16 @@ def script_info(ctx: UmamusumeContext):
             if ctx.prev_ui is INFO:
                 ctx.cultivate_detail.clock_used -= 1
                 clock_used[0] -= 1
-            if (ctx.cultivate_detail.clock_use_limit > ctx.cultivate_detail.clock_used and
-                    ctx.cultivate_detail.clock_use_day_limit > clock_used[0]):
+            if (ctx.task.detail.clock_use_limit > ctx.cultivate_detail.clock_used and
+                    ctx.task.detail.clock_use_day_limit > clock_used[0]):
                 ctx.ctrl.click_by_point(RACE_FAIL_CONTINUE_USE_CLOCK)
                 ctx.cultivate_detail.clock_used += 1
                 clock_used[0] += 1
             else:
                 ctx.ctrl.click_by_point(RACE_FAIL_CONTINUE_CANCEL)
-            log.debug("闹钟场限制%s,已使用%s；闹钟日限制%s,已使用%s", str(ctx.cultivate_detail.clock_use_limit),
+            log.debug("闹钟场限制%s,已使用%s；闹钟日限制%s,已使用%s", str(ctx.task.detail.clock_use_limit),
                       str(ctx.cultivate_detail.clock_used),
-                      str(ctx.cultivate_detail.clock_use_day_limit), str(clock_used[0]))
+                      str(ctx.task.detail.clock_use_day_limit), str(clock_used[0]))
         if title_text == TITLE[4]:
             ctx.ctrl.click_by_point(GET_TITLE_CONFIRM)
         if title_text == TITLE[5]:
@@ -136,13 +136,16 @@ def script_info(ctx: UmamusumeContext):
             date = ctx.cultivate_detail.turn_info.date
             if date != -1:
                 if date <= 72:
-                    target_tactic = ctx.cultivate_detail.tactic_list[int((date - 1) / 24)] - 1
+                    target_tactic = ctx.task.detail.tactic_list[int((date - 1) / 24)] - 1
                 else:
-                    target_tactic = ctx.cultivate_detail.tactic_list[2] - 1
-                # 前方脚质无人时自动切换后方脚质
+                    target_tactic = ctx.task.detail.tactic_list[3] - 1
+                # 单逃回避，无逃单先可接受
+                if target_tactic == 3 and not ctx.cultivate_detail.turn_info.race_tactic_exist[3]:
+                    target_tactic = 2
+                """# 前方脚质无人时自动切换后方脚质
                 tactic_exist = ctx.cultivate_detail.turn_info.race_tactic_exist
                 if any(tactic_exist):
-                    target_tactic = min(target_tactic, 3 - tactic_exist[::-1].index(True))
+                    target_tactic = min(target_tactic, 3 - tactic_exist[::-1].index(True))"""
                 ctx.ctrl.click_by_point(TACTIC_LIST[target_tactic])
             time.sleep(0.5)
             ctx.ctrl.click_by_point(BEFORE_RACE_CHANGE_TACTIC_CONFIRM)
@@ -165,8 +168,8 @@ def script_info(ctx: UmamusumeContext):
             ctx.ctrl.click_by_point(ACTIVITY_STORY_UNLOCK_CONFIRM)
             ctx.ctrl.click_by_point(ACTIVITY_STORY_UNLOCK_CONFIRM2)
         if title_text == TITLE[26]:
-            if ctx.cultivate_detail.allow_recover_tp_drink or \
-                    ctx.cultivate_detail.allow_recover_tp_diamond:
+            if ctx.task.detail.allow_recover_tp_drink or \
+                    ctx.task.detail.allow_recover_tp_diamond:
                 ctx.ctrl.click_by_point(TO_RECOVER_TP)
             else:
                 ctx.cultivate_detail.no_tp = True
@@ -174,9 +177,9 @@ def script_info(ctx: UmamusumeContext):
                 ctx.ctrl.click(200, 830, "取消回复训练值")
         if title_text == TITLE[27]:
             if image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_1).find_match:
-                if ctx.cultivate_detail.allow_recover_tp_drink:
+                if ctx.task.detail.allow_recover_tp_drink:
                     ctx.ctrl.click_by_point(USE_TP_DRINK)
-                elif ctx.cultivate_detail.allow_recover_tp_diamond:
+                elif ctx.task.detail.allow_recover_tp_diamond:
                     ctx.ctrl.click_by_point(USE_DIAMOND)
             elif image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_2).find_match or \
                     image_match(ctx.ctrl.get_screen(to_gray=True), REF_RECOVER_TP_4).find_match:

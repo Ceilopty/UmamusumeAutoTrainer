@@ -76,7 +76,8 @@ class TrainingInfo:
         text = "此训练附带支援卡列表：["
         if scenario_type == ScenarioType.SCENARIO_TYPE_AOHARU:
             for c in self.support_card_info_list:
-                text += "[支援卡名称：" + str(c.name) + ", 支援卡类型：" + str(c.card_type.name) + ", 支援卡羁绊阶段：" + str(c.favor.name) + ", 可提升青春杯友情: " + str(c.can_incr_aoharu_train) + "] "
+                text += "[支援卡名称：" + str(c.name) + ", 支援卡类型：" + str(c.card_type.name) + ", 支援卡羁绊阶段：" + \
+                        str(c.favor.name) + ", 可提升青春杯友情: " + str(c.can_incr_aoharu_train) + "] "
         else:
             for c in self.support_card_info_list:
                 if c.favor != SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_UNKNOWN:
@@ -250,7 +251,7 @@ class TurnInfo:
         self.race_tactic_exist = [False, False, False, False]
         self.aoharu_race_index = 0
 
-    def log_turn_info(self, scenario_type : ScenarioType, train=True, show_skill_and_hint=False):
+    def log_turn_info(self, scenario_type: ScenarioType, train=True, show_skill_and_hint=False):
         log.info("当前回合时间 " + str(self.date))
         log.info("干劲状态 " + str(self.motivation_level))
         log.info("体力剩余 " + str(self.remain_stamina))

@@ -34,8 +34,8 @@ def parse_event(event: tuple):
                 possibility = globals()['P_' + possibility]
             if 'condition' in effect:
                 effect['condition'] = getattr(Condition, 'CONDITION_' + effect['condition'].upper())
-            event_effect = EventEffect()._replace(**effect)
-            parsed_choice = EventChoice()._replace(possibility=possibility, event_effect=event_effect)
+            event_effect = EventEffect(**EventEffect._field_defaults)._replace(**effect)
+            parsed_choice = EventChoice(**EventChoice._field_defaults)._replace(possibility=possibility, event_effect=event_effect)
             parsed_choices.append(parsed_choice)
         parsed_event.append(parsed_choices)
     return parsed_event

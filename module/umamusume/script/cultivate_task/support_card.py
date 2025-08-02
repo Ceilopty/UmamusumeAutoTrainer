@@ -1,5 +1,5 @@
-from module.umamusume.context import  TurnInfo, UmamusumeContext
-from module.umamusume.define import TrainingType, SupportCardType, SupportCardFavorLevel
+from module.umamusume.context import UmamusumeContext
+from module.umamusume.define import SupportCardType, SupportCardFavorLevel
 from module.umamusume.script.cultivate_task.types import SupportCardInfo
 
 DEFAULT = 0
@@ -117,5 +117,3 @@ SCORE_DICT: dict = {
         DEFAULT: default_unknown_support_card_score
     },
 }
-
-

@@ -36,8 +36,9 @@ def script_daily_race_dr_home(ctx: UmamusumeContext):
     if daily_raced(ctx) or ctx.daily_race_detail.raced:
         ctx.ctrl.click(80, 1080, "返回")
         return
-    race = [REF_DAILY_RACE_MOONLIGHT, REF_DAILY_RACE_JUPITER][ctx.daily_race_detail.race]
-    difficulty = [REF_DAILY_RACE_EASY, REF_DAILY_RACE_NORMAL, REF_DAILY_RACE_HARD][ctx.daily_race_detail.difficulty]
+    race = [REF_DAILY_RACE_MOONLIGHT, REF_DAILY_RACE_JUPITER][ctx.task.detail.daily_race_type]
+    difficulty = [REF_DAILY_RACE_EASY, REF_DAILY_RACE_NORMAL,
+                  REF_DAILY_RACE_HARD][ctx.task.detail.daily_race_difficulty]
     retry = 3
     while retry := retry - 1:
         match_result = image_match(ctx.ctrl.get_screen(True), race)
@@ -70,7 +71,7 @@ def script_daily_race_select_racer(ctx: UmamusumeContext):
         return
     # 未触发限时特卖时有概率导致选择赛事和难度的页面左上确实选择参赛优骏少女，导致卡住。
     img = cv2.cvtColor(ctx.current_screen, cv2.COLOR_BGR2RGB)
-    if not compare_color_equal(img[1080, 360], [131, 208, 8]):
+    if not compare_color_equal(img[1080, 360].tolist(), [131, 208, 8]):
         ctx.ctrl.click(360, 1220, "回主页")
         return
     ctx.ctrl.click(360, 1080, "确认参赛选手")

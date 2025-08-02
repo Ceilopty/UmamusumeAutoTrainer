@@ -44,20 +44,20 @@
                 </div>
                 <div class="col">
                   <div class="form-group">
-                    <label for="selectAutoRecoverTPDrink">TP不足时自动恢复（仅使用药水）</label>
-                    <select v-model="recoverTPDrink" class="form-control" id="selectAutoRecoverTPDrink">
-                      <option :value=true>是</option>
-                      <option :value=false>否</option>
+                    <label for="selectCardDeck">支援卡组选择</label>
+                    <select v-model="selectedCardDeck" class="form-control" id="selectCardDeck">
+                      <option :value=0>使用上次选择</option>
+                      <option v-for="n in 10" :key="n" :value="n">卡组{{ n }}</option>
+                      <option :value=-1>指定卡组名称</option>
                     </select>
                   </div>
                 </div>
                 <div class="col">
                   <div class="form-group">
-                    <label for="selectAutoRecoverTPDiamond">TP不足时自动恢复（仅使用钻石）</label>
-                    <select v-model="recoverTPDiamond" class="form-control" id="selectAutoRecoverTPDiamond">
-                      <option :value=true>是</option>
-                      <option :value=false>否</option>
-                    </select>
+                    <label for="cardDeckNameInput" :style="{ color: selectedCardDeck==-1 ? '' : 'lightgrey' }">卡组名称</label>
+                    <div class="form-inline">
+                      <input v-model="cardDeckName" type="text" class="form-control" id="cardDeckNameInput" placeholder="卡组名称" :disabled="selectedCardDeck!==-1">
+                    </div>
                   </div>
                 </div>
               </div>
@@ -69,8 +69,8 @@
                   </div>
                 </div>
               </div>
-              <!-- 限时模块: 富士奇石的表演秀模式 -->
               <div class="row">
+                <!-- 限时模块: 富士奇石的表演秀模式 -->
                 <div class="col-3">
                   <div class="form-group">
                     <label>⏰ 富士奇石的表演秀模式</label>
@@ -85,6 +85,24 @@
                     <label :style="{ color: fujikisekiShowMode ? '' : 'lightgrey' }">选择难度</label>
                     <select v-model="fujikisekiShowDifficulty" class="form-control" :disabled="!fujikisekiShowMode">
                       <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="form-group">
+                    <label for="selectAutoRecoverTPDrink">TP不足时自动恢复（仅使用药水）</label>
+                    <select v-model="recoverTPDrink" class="form-control" id="selectAutoRecoverTPDrink">
+                      <option :value=true>是</option>
+                      <option :value=false>否</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="form-group">
+                    <label for="selectAutoRecoverTPDiamond">TP不足时自动恢复（仅使用钻石）</label>
+                    <select v-model="recoverTPDiamond" class="form-control" id="selectAutoRecoverTPDiamond">
+                      <option :value=true>是</option>
+                      <option :value=false>否</option>
                     </select>
                   </div>
                 </div>
@@ -243,6 +261,17 @@
                   <div class="form-group">
                     <label for="selectTactic3">第三年</label>
                     <select v-model="selectedRaceTactic3" class="form-control" id="selectTactic3">
+                      <option :value=1>后追（追）</option>
+                      <option :value=2>居中（差）</option>
+                      <option :value=3>前列（先）</option>
+                      <option :value=4>领头（逃）</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="form-group">
+                    <label for="selectTactic4">总决赛决赛</label>
+                    <select v-model="selectedRaceTactic4" class="form-control" id="selectTactic4">
                       <option :value=1>后追（追）</option>
                       <option :value=2>居中（差）</option>
                       <option :value=3>前列（先）</option>
@@ -809,82 +838,7 @@ export default {
         {id:7205, name:'东京大奖赛', date: '12月后', type: 'GI'}],
       cultivatePresets:[],
       cultivateDefaultPresets:[
-      {
-          name: "默认",
-          race_list: [],
-          skill: "",
-          expect_attribute:[800, 800, 800, 400, 400],
-          follow_support_card: {id:1, name:'在耀眼景色的前方'},
-          follow_support_card_level: 50,
-          clock_use_limit: 99,
-          learn_skill_threshold: 9999,
-          race_tactic_1: 4,
-          race_tactic_2: 4,
-          race_tactic_3: 4,
-
-        },
         {
-          name: "小栗帽基础育成赛程",
-          race_list: [1701, 2303, 2401, 5208, 5407, 5904],
-          skill: "",
-          expect_attribute:[800, 650, 800, 300, 400],
-          follow_support_card: {id:16, name:'一颗安心糖'},
-          follow_support_card_level: 50,
-          clock_use_limit: 99,
-          learn_skill_threshold: 9999,
-          race_tactic_1: 4,
-          race_tactic_2: 4,
-          race_tactic_3: 4,
-        },
-        {
-          name: "大和赤骥基础育成赛程",
-          race_list: [1701, 2303],
-          skill: "",
-          expect_attribute:[800, 600, 600, 300, 400],
-          follow_support_card: {id:16, name:'一颗安心糖'},
-          follow_support_card_level: 50,
-          clock_use_limit: 99,
-          learn_skill_threshold: 9999,
-          race_tactic_1: 4,
-          race_tactic_2: 4,
-          race_tactic_3: 4,
-        },
-        {
-          name: "目白麦昆基础育成赛程",
-          race_list: [2203, 2401],
-          skill: "",
-          expect_attribute:[700, 700, 600, 350, 400],
-          follow_support_card: {id:16, name:'一颗安心糖'},
-          follow_support_card_level: 50,
-          clock_use_limit: 99,
-          learn_skill_threshold: 9999,
-          race_tactic_1: 4,
-          race_tactic_2: 4,
-          race_tactic_3: 4,
-        },
-        {
-          name:"历战小栗帽35战60w粉丝(需求觉醒3,借满破小海湾,种马速耐,支援卡带赛后加成高的)",
-          race_list:[1601,1701,1902,2103,2302,2401,2701,2905,3103,3303,3404,3601,4102,4203,4408,4506,4607,4804,4902,5208,5407,5601,5709,5904,6006,6602,6701,6807,7007,7111,7204],
-          skill:"大胃王",
-          expect_attribute:[700,500,700,350,350],
-          follow_support_card:{"id":16,"name":"一颗安心糖","desc":"耐小海湾"},
-          follow_support_card_level:50,
-          clock_use_limit:2,
-          learn_skill_threshold:450,
-          race_tactic_1:4,
-          race_tactic_2:3,
-          race_tactic_3:3
-        }
-      ],
-      expectSpeedValue : 650,
-      expectStaminaValue : 600,
-      expectPowerValue: 650,
-      expectWillValue: 300,
-      expectIntelligenceValue:300,
-
-      supportCardLevel: 50,
-      
-      presetsUse: {
           name: "默认",
           race_list: [],
           skill: "",
@@ -899,8 +853,85 @@ export default {
           race_tactic_1: 4,
           race_tactic_2: 4,
           race_tactic_3: 4,
+          race_tactic_4: 4,
+          card_deck: 0,
+          deck_name: "",
           extraWeight:[],
         },
+        {
+          name: "小栗帽基础育成赛程",
+          race_list: [1701, 2303, 2401, 5208, 5407, 5904],
+          skill: "",
+          expect_attribute:[800, 650, 800, 300, 400],
+          follow_support_card: {id:16, name:'一颗安心糖'},
+          follow_support_card_level: 50,
+          clock_use_limit: 99,
+          learn_skill_threshold: 9999,
+          race_tactic_1: 4,
+          race_tactic_2: 4,
+          race_tactic_3: 4,
+          race_tactic_4: 4,
+          card_deck: 0,
+          deck_name: "",
+        },
+        {
+          name: "大和赤骥基础育成赛程",
+          race_list: [1701, 2303],
+          skill: "",
+          expect_attribute:[800, 600, 600, 300, 400],
+          follow_support_card: {id:16, name:'一颗安心糖'},
+          follow_support_card_level: 50,
+          clock_use_limit: 99,
+          learn_skill_threshold: 9999,
+          race_tactic_1: 4,
+          race_tactic_2: 4,
+          race_tactic_3: 4,
+          race_tactic_4: 4,
+          card_deck: 0,
+          deck_name: "",
+        },
+        {
+          name: "目白麦昆基础育成赛程",
+          race_list: [2203, 2401],
+          skill: "",
+          expect_attribute:[700, 700, 600, 350, 400],
+          follow_support_card: {id:16, name:'一颗安心糖'},
+          follow_support_card_level: 50,
+          clock_use_limit: 99,
+          learn_skill_threshold: 9999,
+          race_tactic_1: 4,
+          race_tactic_2: 4,
+          race_tactic_3: 4,
+          race_tactic_4: 4,
+          card_deck: 0,
+          deck_name: "",
+        },
+        {
+          name:"历战小栗帽35战60w粉丝(需求觉醒3,借满破小海湾,种马速耐,支援卡带赛后加成高的)",
+          race_list:[1601,1701,1902,2103,2302,2401,2701,2905,3103,3303,3404,3601,4102,4203,4408,4506,4607,4804,4902,5208,5407,5601,5709,5904,6006,6602,6701,6807,7007,7111,7204],
+          skill:"大胃王",
+          expect_attribute:[700,500,700,350,350],
+          follow_support_card:{"id":16,"name":"一颗安心糖","desc":"耐小海湾"},
+          follow_support_card_level:50,
+          clock_use_limit:2,
+          learn_skill_threshold:450,
+          race_tactic_1:4,
+          race_tactic_2:3,
+          race_tactic_3:3,
+          race_tactic_4: 3,
+          card_deck: 0,
+          deck_name: "",
+        }
+      ],
+      expectSpeedValue : 650,
+      expectStaminaValue : 600,
+      expectPowerValue: 650,
+      expectWillValue: 300,
+      expectIntelligenceValue:300,
+
+      supportCardLevel: 50,
+      
+      
       timeSaleItemList1:[
         {id:0, name:"碎片一"},
         {id:1, name:"碎片二"},
@@ -932,6 +963,8 @@ export default {
       
       selectedScenario: undefined,
       selectedUmamusumeTaskType: undefined,
+      selectedCardDeck: 0,
+      cardDeckName: "",
       selectedSupportCard: undefined,
       extraRace: [],
       skillLearnPriorityList:[
@@ -947,6 +980,7 @@ export default {
       selectedRaceTactic1: 4,
       selectedRaceTactic2: 4,
       selectedRaceTactic3: 4,
+      selectedRaceTactic4: 4,
       clockUseLimit: 99,
       clockUseDayLimit: 99,
       learnSkillThreshold: 9999,
@@ -1004,6 +1038,7 @@ export default {
       this.selectedSupportCard = this.umausumeSupportCardList[0]
       this.selectedUmamusumeTaskType = this.umamusumeTaskTypeList[0]
       this.selectedScenario = this.scenarioList[0]
+      this.presetsUse = this.cultivateDefaultPresets[0]
     },
     switchRaceList: function(){
       this.showRaceList = !this.showRaceList
@@ -1048,12 +1083,14 @@ export default {
         payload.attachment_data = {
           "scenario": this.selectedScenario.id,
           "expect_attribute": [this.expectSpeedValue, this.expectStaminaValue, this.expectPowerValue, this.expectWillValue, this.expectIntelligenceValue],
+          "deck_index": this.selectedCardDeck,
+          "deck_name": this.selectedCardDeck === -1 ? this.cardDeckName : '',
           "follow_support_card_name": this.selectedSupportCard.name,
           "follow_support_card_level": this.supportCardLevel,
           "extra_race_list": this.extraRace,
           "learn_skill_list": learn_skill_list,
           "learn_skill_blacklist": learn_skill_blacklist,
-          "tactic_list": [this.selectedRaceTactic1, this.selectedRaceTactic2, this.selectedRaceTactic3],
+          "tactic_list": [this.selectedRaceTactic1, this.selectedRaceTactic2, this.selectedRaceTactic3, this.selectedRaceTactic4],
           "clock_use_limit": this.clockUseLimit,
           "clock_use_day_limit": this.clockUseDayLimit,
           "learn_skill_threshold": this.learnSkillThreshold,
@@ -1138,23 +1175,19 @@ export default {
       this.expectPowerValue = this.presetsUse.expect_attribute[2]
       this.expectWillValue = this.presetsUse.expect_attribute[3]
       this.expectIntelligenceValue = this.presetsUse.expect_attribute[4]
-      this.selectedSupportCard = this.presetsUse.follow_support_card,
-      this.supportCardLevel = this.presetsUse.follow_support_card_level,
-      this.clockUseLimit = this.presetsUse.clock_use_limit,
-      this.learnSkillThreshold = this.presetsUse.learn_skill_threshold,
-      this.selectedRaceTactic1 = this.presetsUse.race_tactic_1,
-      this.selectedRaceTactic2 = this.presetsUse.race_tactic_2,
-      this.selectedRaceTactic3 = this.presetsUse.race_tactic_3,
+      this.selectedSupportCard = this.umausumeSupportCardList.find(card=>card.name===this.presetsUse.follow_support_card.name)
+      this.supportCardLevel = this.presetsUse.follow_support_card_level
+      this.clockUseLimit = this.presetsUse.clock_use_limit
+      this.learnSkillThreshold = this.presetsUse.learn_skill_threshold
+      this.selectedRaceTactic1 = this.presetsUse.race_tactic_1
+      this.selectedRaceTactic2 = this.presetsUse.race_tactic_2
+      this.selectedRaceTactic3 = this.presetsUse.race_tactic_3
+      this.selectedRaceTactic4 = this.presetsUse.race_tactic_4
+      this.selectedCardDeck = 'card_deck' in this.presetsUse ? this.presetsUse.card_deck : 0
+      this.cardDeckName = (this.selectedCardDeck == -1 && 'cardDeckName' in this.presetsUse)? this.presetsUse.deck_name : ""
       this.skillLearnBlacklist = this.presetsUse.skill_blacklist
-
-      if ('clock_use_day_limit' in this.presetsUse)
-      {
-        this.clockUseDayLimit =  this.clock_use_day_limit
-      }
-      else
-      {
-        this.clockUseDayLimit =  99
-      }
+      this.presetNameEdit = this.presetsUse.name
+      this.clockUseDayLimit = 'clock_use_day_limit' in this.presetsUse ? this.presetsUse.clock_use_day_limit: 99
       if ('extraWeight' in this.presetsUse && this.presetsUse.extraWeight != [])
       {
         this.extraWeight1 =  this.presetsUse.extraWeight[0]
@@ -1185,7 +1218,7 @@ export default {
           }
           this.skillLearnPriorityList[i].skills = this.presetsUse.skill_priority_list[i]
         }
-        while(this.skillPriorityNum > this.presetsUse.skill_priority_list?.length)
+        while(this.skillPriorityNum > this.presetsUse.skill_priority_list?.length && this.skillPriorityNum > 1)
         {
           this.deleteBox(0,this.skillPriorityNum-1)
         }
@@ -1223,6 +1256,9 @@ export default {
         race_tactic_1: this.selectedRaceTactic1,
         race_tactic_2: this.selectedRaceTactic2,
         race_tactic_3: this.selectedRaceTactic3,
+        race_tactic_4: this.selectedRaceTactic4,
+        card_deck: this.selectedCardDeck,
+        deck_name: this.cardDeckName,
         extraWeight: [this.extraWeight1,this.extraWeight2,this.extraWeight3]
       }
       // 仅当选择青春杯剧本时，才保存青春杯配置
@@ -1262,17 +1298,19 @@ export default {
         this.selectedUmamusumeTaskType = this.umamusumeTaskTypeList.find((type)=>type.id===task.task_type)
         // 育成
         if (task.task_type ===1){
-          while(this.skillPriorityNum<task.detail.learn_skill_list.length){
+          while(this.skillPriorityNum < task.detail.learn_skill_list.length && this.skillPriorityNum < 5){
             this.addBox() 
           }
-          while(this.skillPriorityNum>task.detail.learn_skill_list.length){
+          while(this.skillPriorityNum > task.detail.learn_skill_list.length && this.skillPriorityNum > 1){
             this.deleteBox(0,this.skillPriorityNum-1)
           }
-          for(let i = 0; i < this.skillPriorityNum; i++){
+          for(let i = 0; i < task.detail.learn_skill_list.length; i++){
             this.skillLearnPriorityList[i].skills = task.detail.learn_skill_list[i].filter((x)=>x!=="").join()
           }
           this.skillLearnBlacklist = task.detail.learn_skill_blacklist.filter((x)=>x!=="").join()
           this.selectedScenario = this.scenarioList.find((scenario)=>scenario.id===task.detail.scenario)
+          this.selectedCardDeck = task.detail.deck_index
+          this.cardDeckName = this.selectedCardDeck === -1 ? task.detail.deck_name : ""
           // 青春杯加载细节
           if (task.detail.scenario === 2){
             this.aoharuTeamNameSelection = task.detail.scenario_config.aoharu_config.aoharu_team_name_selection
@@ -1282,7 +1320,7 @@ export default {
           this.selectedSupportCard = this.umausumeSupportCardList.find(card=>card.name===task.detail.follow_support_card_name)
           this.supportCardLevel = task.detail.follow_support_card_level
           this.extraRace = [...task.detail.extra_race_list.sort((a,b)=>a-b)];
-          [this.selectedRaceTactic1, this.selectedRaceTactic2, this.selectedRaceTactic3] = [...task.detail.tactic_list];
+          [this.selectedRaceTactic1, this.selectedRaceTactic2, this.selectedRaceTactic3, this.selectedRaceTactic4] = [...task.detail.tactic_list];
           this.clockUseLimit = task.detail.clock_use_limit
           this.clockUseDayLimit = task.detail.clock_use_day_limit
           this.learnSkillThreshold = task.detail.learn_skill_threshold

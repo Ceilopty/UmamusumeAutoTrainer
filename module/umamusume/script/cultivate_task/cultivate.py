@@ -1,8 +1,8 @@
-import json
+# import json
 import time
 import threading
 
-import numpy as np
+# import numpy as np
 
 from bot.base.task import TaskStatus, EndTaskReason
 from module.umamusume.task import EndTaskReason as UEndTaskReason
@@ -49,18 +49,18 @@ def script_cultivate_main_menu(ctx: UmamusumeContext):
     if not ctx.cultivate_detail.turn_info.parse_main_menu_finish:
         parse_cultivate_main_menu(ctx, img)
 
-    has_extra_race = len([i for i in ctx.cultivate_detail.extra_race_list if str(i)[:2]
+    has_extra_race = len([i for i in ctx.task.detail.extra_race_list if str(i)[:2]
                           == str(ctx.cultivate_detail.turn_info.date)]) != 0
 
     # 意外情况处理
     if not ctx.cultivate_detail.turn_info.turn_learn_skill_done and ctx.cultivate_detail.learn_skill_done:
         ctx.cultivate_detail.reset_skill_learn()
 
-    if (ctx.cultivate_detail.turn_info.uma_attribute.skill_point > ctx.cultivate_detail.learn_skill_threshold
+    if (ctx.cultivate_detail.turn_info.uma_attribute.skill_point > ctx.task.detail.learn_skill_threshold
             and not ctx.cultivate_detail.turn_info.turn_learn_skill_done):
-        if len(ctx.cultivate_detail.learn_skill_list) > 0 or not ctx.cultivate_detail.learn_skill_only_user_provided:
+        if len(ctx.task.detail.learn_skill_list) > 0 or not ctx.task.detail.learn_skill_only_user_provided:
             ctx.ctrl.click_by_point(CULTIVATE_SKILL_LEARN)
-        elif has_extra_race and ctx.cultivate_detail.learn_skill_before_race \
+        elif has_extra_race and ctx.task.detail.learn_skill_before_race \
                 and not ctx.cultivate_detail.learn_skill_before_race_done:
             ctx.cultivate_detail.turn_info.racing = True
             ctx.ctrl.click_by_point(CULTIVATE_SKILL_LEARN)
@@ -242,10 +242,10 @@ def script_follow_support_card_select(ctx: UmamusumeContext):
         if selected:
             break
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        if compare_color_equal(img[1096, 693], [125, 120, 142]):
+        if compare_color_equal(img[1096, 693].tolist(), [125, 120, 142]):
             while True:
                 img = cv2.cvtColor(ctx.ctrl.get_screen(), cv2.COLOR_BGR2RGB)
-                if compare_color_equal(img[127, 697], [211, 209, 219]):
+                if compare_color_equal(img[127, 697].tolist(), [211, 209, 219]):
                     ctx.ctrl.swipe(x1=350, y1=400, x2=350, y2=1000, duration=200, name="")
                 else:
                     break
@@ -269,7 +269,8 @@ def script_cultivate_event(ctx: UmamusumeContext):
         # 避免出现选项残缺的情况，这里重新解析一次
         img = ctx.ctrl.get_screen()
         event_name, selector_list = parse_cultivate_event(ctx, img)
-        choice_index = get_event_choice(ctx, event_name) or ura_get_event_choice_by_effect(ctx) or Event(event_name)(ctx)
+        choice_index = get_event_choice(ctx,
+                                        event_name) or ura_get_event_choice_by_effect(ctx) or Event(event_name)(ctx)
         # 意外情况容错
         if choice_index > len(selector_list):
             choice_index = 1
@@ -347,7 +348,7 @@ def script_cultivate_goal_race(ctx: UmamusumeContext):
         ctx.cultivate_detail.turn_info = TurnInfo()
         ctx.cultivate_detail.turn_info.date = current_date
     ctx.cultivate_detail.turn_info.racing = True
-    if ctx.cultivate_detail.learn_skill_before_race and not ctx.cultivate_detail.turn_info.turn_learn_skill_done \
+    if ctx.task.detail.learn_skill_before_race and not ctx.cultivate_detail.turn_info.turn_learn_skill_done \
             and not ctx.cultivate_detail.learn_skill_before_race_done:
         ctx.ctrl.click(205, 1080, "技能")
         return
@@ -372,11 +373,12 @@ def script_cultivate_race_list(ctx: UmamusumeContext):
         if ctx.cultivate_detail.turn_info.turn_operation is None:
             ctx.ctrl.click_by_point(RETURN_TO_CULTIVATE_MAIN_MENU)
             return
-        if ctx.cultivate_detail.turn_info.turn_operation.turn_operation_type == TurnOperationType.TURN_OPERATION_TYPE_RACE:
+        if ctx.cultivate_detail.turn_info.turn_operation.turn_operation_type == \
+                TurnOperationType.TURN_OPERATION_TYPE_RACE:
             swiped = False
             while True:
                 img = cv2.cvtColor(ctx.ctrl.get_screen(), cv2.COLOR_BGR2RGB)
-                if not compare_color_equal(img[705, 701], [211, 209, 219]):
+                if not compare_color_equal(img[705, 701].tolist(), [211, 209, 219]):
                     if swiped is True:
                         time.sleep(1.5)
                     break
@@ -391,11 +393,12 @@ def script_cultivate_race_list(ctx: UmamusumeContext):
                     time.sleep(1)
                     return
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                if not compare_color_equal(img[1006, 701], [211, 209, 219]):
+                if not compare_color_equal(img[1006, 701].tolist(), [211, 209, 219]):
                     log.warning("未找到目标赛事")
                     # 没有合适的赛事就使用备用的操作
                     if ctx.cultivate_detail.turn_info.turn_operation.race_id == 0:
-                        ctx.cultivate_detail.turn_info.turn_operation.turn_operation_type = ctx.cultivate_detail.turn_info.turn_operation.turn_operation_type_replace
+                        ctx.cultivate_detail.turn_info.turn_operation.turn_operation_type = \
+                            ctx.cultivate_detail.turn_info.turn_operation.turn_operation_type_replace
                     ctx.ctrl.click_by_point(RETURN_TO_CULTIVATE_MAIN_MENU)
                     break
                 ctx.ctrl.swipe(x1=20, y1=1000, x2=20, y2=850, duration=1000, name="")
@@ -431,14 +434,15 @@ def script_cultivate_before_race(ctx: UmamusumeContext):
     if date != -1:
         tactic_check_point_list = [img[668, 480], img[668, 542], img[668, 600], img[668, 670]]
         if date <= 72:
-            target_tactic = ctx.cultivate_detail.tactic_list[int((date - 1) / 24)] - 1
+            target_tactic = ctx.task.detail.tactic_list[int((date - 1) / 24)] - 1
         else:
-            target_tactic = ctx.cultivate_detail.tactic_list[2] - 1
-        final_target_tactic = min(target_tactic, 3 - tactic_exist[::-1].index(True))  # 不会都没人的
+            target_tactic = ctx.task.detail.tactic_list[3] - 1
+        # final_target_tactic = min(target_tactic, 3 - tactic_exist[::-1].index(True))  # 不会都没人的
+        final_target_tactic = target_tactic if target_tactic < 3 or tactic_exist[3] else 2
         p_check_tactic = tactic_check_point_list[final_target_tactic]
         if final_target_tactic != target_tactic:
             log.info("调整脚质：%s -> %s", target_tactic, final_target_tactic)
-        if compare_color_equal(p_check_tactic, [170, 170, 170]):
+        if compare_color_equal(p_check_tactic.tolist(), [170, 170, 170]):
             ctx.ctrl.click_by_point(BEFORE_RACE_CHANGE_TACTIC)
             return
 
@@ -530,21 +534,21 @@ def script_cultivate_learn_skill(ctx: UmamusumeContext):
             ctx.cultivate_detail.turn_info.turn_learn_skill_done = True
         return
     learn_skill_list: list[list[str]]
-    learn_skill_blacklist: list[str] = ctx.cultivate_detail.learn_skill_blacklist
-    if ctx.cultivate_detail.cultivate_finish or not ctx.cultivate_detail.learn_skill_only_user_provided:
-        if len(ctx.cultivate_detail.learn_skill_list) == 0:
+    learn_skill_blacklist: list[str] = list(ctx.task.detail.learn_skill_blacklist).copy()
+    if ctx.cultivate_detail.cultivate_finish or not ctx.task.detail.learn_skill_only_user_provided:
+        if len(ctx.task.detail.learn_skill_list) == 0:
             learn_skill_list = SKILL_LEARN_PRIORITY_LIST
         else:
-            #如果用户自定义了技能优先级，那么不再采用预设的优先级
-            learn_skill_list = ctx.cultivate_detail.learn_skill_list
+            # 如果用户自定义了技能优先级，那么不再采用预设的优先级
+            learn_skill_list = [list(priority_list).copy() for priority_list in ctx.task.detail.learn_skill_list]
     else:
-        if len(ctx.cultivate_detail.learn_skill_list) == 0:
+        if len(ctx.task.detail.learn_skill_list) == 0:
             ctx.ctrl.click_by_point(RETURN_TO_CULTIVATE_FINISH)
             ctx.cultivate_detail.learn_skill_done = True
             ctx.cultivate_detail.turn_info.turn_learn_skill_done = True
             return
         else:
-            learn_skill_list = ctx.cultivate_detail.learn_skill_list
+            learn_skill_list = [list(priority_list).copy() for priority_list in ctx.task.detail.learn_skill_list]
 
     try:
         ura_script_cultivate_learn_skill(ctx, learn_skill_list, learn_skill_blacklist)
@@ -557,13 +561,13 @@ def script_cultivate_learn_skill(ctx: UmamusumeContext):
     skill_list = []
     while ctx.task.running():
         img = ctx.ctrl.get_screen()
-        current_screen_skill_list = get_skill_list(img, learn_skill_list,learn_skill_blacklist)
+        current_screen_skill_list = get_skill_list(img, learn_skill_list, learn_skill_blacklist)
         # 避免重复统计(会出现在页末翻页不完全的情况)
         for i in current_screen_skill_list:
             if i not in skill_list:
                 skill_list.append(i)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        if not compare_color_equal(img[1006, 701], [211, 209, 219]):
+        if not compare_color_equal(img[1006, 701].tolist(), [211, 209, 219]):
             break
         ctx.ctrl.swipe(x1=23, y1=1000, x2=23, y2=636, duration=1000, name="")
         time.sleep(1)
@@ -588,7 +592,7 @@ def script_cultivate_learn_skill(ctx: UmamusumeContext):
     target_skill_list_raw = []
     curr_point = 0
     for i in range(len(learn_skill_list) + 1):
-        if (i > 0 and ctx.cultivate_detail.learn_skill_only_user_provided is True and
+        if (i > 0 and ctx.task.detail.learn_skill_only_user_provided is True and
                 not ctx.cultivate_detail.cultivate_finish):
             break
         for j in range(len(skill_list)):
@@ -610,15 +614,15 @@ def script_cultivate_learn_skill(ctx: UmamusumeContext):
 
     # 删除已经学会的技能
     for skill in target_skill_list_raw:
-        for prioritylist in ctx.cultivate_detail.learn_skill_list:
-            if prioritylist.__contains__(skill):
-                prioritylist.remove(skill)
+        for priority_list in learn_skill_list:
+            if priority_list.__contains__(skill):
+                priority_list.remove(skill)
     for skill in skill_list:
-        for prioritylist in ctx.cultivate_detail.learn_skill_list:
-            if skill['available'] is False and prioritylist.__contains__(skill['skill_name_raw']):
-                prioritylist.remove(skill['skill_name_raw'])
-    #如果一个优先级全为空，则直接将其删除
-    ctx.cultivate_detail.learn_skill_list = [x for x in ctx.cultivate_detail.learn_skill_list if x != []]
+        for priority_list in learn_skill_list:
+            if skill['available'] is False and priority_list.__contains__(skill['skill_name_raw']):
+                priority_list.remove(skill['skill_name_raw'])
+    # 如果一个优先级全为空，则直接将其删除
+    learn_skill_list = [x for x in learn_skill_list if x != []]
 
     # 点技能
     while True:
@@ -627,12 +631,12 @@ def script_cultivate_learn_skill(ctx: UmamusumeContext):
         if len(target_skill_list) == 0:
             break
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        if not compare_color_equal(img[488, 701], [211, 209, 219]):
+        if not compare_color_equal(img[488, 701].tolist(), [211, 209, 219]):
             break
         ctx.ctrl.swipe(x1=23, y1=636, x2=23, y2=1000, duration=1000, name="")
         time.sleep(1)
 
-    log.debug("当前待学习的技能：" + str(ctx.cultivate_detail.learn_skill_list))
+    log.debug("当前待学习的技能：" + str(learn_skill_list))
     log.debug("当前已学习的技能：" + str([skill['skill_name'] for skill in skill_list if not skill['available']]))
 
     ctx.cultivate_detail.learn_skill_done = True

@@ -5,15 +5,21 @@ from module.umamusume.define import ScenarioType
 from module.umamusume.script.cultivate_task.scenario.configs import ScenarioConfig, AoharuConfig
 
 
+class TaskDetailPara:
+    pass
+
+
 class TaskDetail:
     scenario: ScenarioType
-    expect_attribute: list[int]
+    expect_attribute: tuple[int]
     follow_support_card_name: str
     follow_support_card_level: int
-    extra_race_list: list[int]
-    learn_skill_list: list[list[str]]
-    learn_skill_blacklist: list[str]
-    tactic_list: list[int]
+    deck_index: int
+    deck_name: str
+    extra_race_list: tuple[int]
+    learn_skill_list: tuple[tuple[str]]
+    learn_skill_blacklist: tuple[str]
+    tactic_list: tuple[int]
     clock_use_limit: int
     clock_use_day_limit: int
     learn_skill_threshold: int
@@ -22,7 +28,8 @@ class TaskDetail:
     allow_recover_tp_drink: bool
     allow_recover_tp_diamond: bool
     cultivate_progress_info: dict
-    extra_weight: list
+    extra_weight: tuple
+    cultivate_result: dict
     # 剧本相关配置
     scenario_config: ScenarioConfig
     # 限时: 富士奇石的表演秀
@@ -31,7 +38,7 @@ class TaskDetail:
 
     opponent_index: int
     opponent_stamina: int
-    time_sale: list[int]
+    time_sale: tuple[int]
     time_sale_bought: list[list[int]]
 
     ask_shoe_type: int
@@ -52,6 +59,16 @@ class TaskDetail:
         'not_found_ui': {},
         'clock_used': {},
     }
+
+    def __init__(self, para: TaskDetailPara):
+        for k, v in para.__dict__.items():
+            super().__setattr__(k, v)
+
+    def __setattr__(self, key, value):
+        if key == "not_found_ui":
+            super().__setattr__(key, value)
+        else:
+            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__, key))
 
 
 class EndTaskReason(Enum):
@@ -86,7 +103,7 @@ class UmamusumeTaskType(Enum):
 
 def build_task(task_execute_mode: TaskExecuteMode, task_type: int,
                task_desc: str, cron_job_config: dict, attachment_data: dict) -> UmamusumeTask:
-    td = TaskDetail()
+    td = TaskDetailPara()
     ut = UmamusumeTask(task_execute_mode=task_execute_mode,
                        task_type=UmamusumeTaskType(task_type), task_desc=task_desc, app_name="umamusume")
     ut.cron_job_config = CronJobConfig()
@@ -94,13 +111,15 @@ def build_task(task_execute_mode: TaskExecuteMode, task_type: int,
         ut.cron_job_config.cron = cron_job_config['cron']
     ut.device_name = attachment_data.get('device_name')
     if task_type == 1:
-        td.expect_attribute = attachment_data['expect_attribute']
+        td.expect_attribute = tuple(attachment_data['expect_attribute'])
+        td.deck_index = attachment_data['deck_index']
+        td.deck_name = attachment_data['deck_name'] if td.deck_index == -1 else ""
         td.follow_support_card_level = int(attachment_data['follow_support_card_level'])
         td.follow_support_card_name = attachment_data['follow_support_card_name']
-        td.extra_race_list = attachment_data['extra_race_list']
-        td.learn_skill_list = attachment_data['learn_skill_list']
-        td.learn_skill_blacklist = attachment_data['learn_skill_blacklist']
-        td.tactic_list = attachment_data['tactic_list']
+        td.extra_race_list = tuple(attachment_data['extra_race_list'])
+        td.learn_skill_list = tuple(tuple(priority) for priority in attachment_data['learn_skill_list'])
+        td.learn_skill_blacklist = tuple(attachment_data['learn_skill_blacklist'])
+        td.tactic_list = tuple(attachment_data['tactic_list'])
         td.clock_use_limit = attachment_data['clock_use_limit']
         td.clock_use_day_limit = attachment_data['clock_use_day_limit']
         td.learn_skill_threshold = attachment_data['learn_skill_threshold']
@@ -108,7 +127,7 @@ def build_task(task_execute_mode: TaskExecuteMode, task_type: int,
         td.learn_skill_before_race = attachment_data['learn_skill_before_race']
         td.allow_recover_tp_drink = attachment_data['allow_recover_tp_drink']
         td.allow_recover_tp_diamond = attachment_data['allow_recover_tp_diamond']
-        td.extra_weight = attachment_data['extra_weight']
+        td.extra_weight = tuple(tuple(year_weight)for year_weight in attachment_data['extra_weight'])
         td.cultivate_result = {}
         td.scenario = ScenarioType(attachment_data['scenario'])
         # 剧本相关设置
@@ -126,7 +145,7 @@ def build_task(task_execute_mode: TaskExecuteMode, task_type: int,
         td.daily_race_type = attachment_data['daily_race_type']
         td.daily_race_difficulty = attachment_data['daily_race_difficulty']
     if task_type in (2, 4):
-        td.time_sale = sorted(attachment_data['time_sale'])
+        td.time_sale = tuple(sorted(attachment_data['time_sale']))
         td.time_sale_bought = []
-    ut.detail = td
+    ut.detail = TaskDetail(td)
     return ut

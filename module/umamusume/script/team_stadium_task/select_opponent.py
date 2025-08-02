@@ -11,7 +11,7 @@ except ImportError:
 def select_opponent(ctx: UmamusumeContext) -> int:
     if index := ura_select_opponent(ctx):
         return index
-    index = ctx.team_stadium_detail.opponent_index
+    index = ctx.task.detail.opponent_index
     if index is not None:
         if index:
             return index

@@ -27,7 +27,9 @@ from module.umamusume.script.time_sale.time_sale import (script_shop_main,
                                                          script_time_sale_main,
                                                          )
 from module.umamusume.script.team_stadium_task.info import ts_script_info
-from module.umamusume.script.donate_task.donate import d_script_main_menu, script_guild_home, script_circle_ranking_result
+from module.umamusume.script.donate_task.donate import (d_script_main_menu, script_guild_home,
+                                                        script_circle_ranking_result,
+                                                        )
 from module.umamusume.script.donate_task.info import d_script_info
 from module.umamusume.script.daily_race_task.race import (dr_script_main_menu,
                                                           dr_script_race_home,

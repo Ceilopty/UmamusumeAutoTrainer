@@ -104,7 +104,7 @@ def _motivation(ctx: UmamusumeContext) -> float:
     else:
         coefficient = 1
     now = ctx.cultivate_detail.turn_info.uma_attribute.to_tuple()
-    expect = ctx.cultivate_detail.expect_attribute
+    expect = ctx.task.detail.expect_attribute
     process = sum(now[i] / expect[i] * ATTRIBUTE_PREFERENCE[i] for i in range(5)) / sum(ATTRIBUTE_PREFERENCE)
     return (level - 3) * coefficient * process * MOTIVATION_BASIC
 
@@ -141,7 +141,7 @@ def _favor(ctx: UmamusumeContext) -> float:
 def _skill(ctx: UmamusumeContext) -> float:
     hint_score = 0
     skill_score = 0
-    prefer_list_list = ctx.cultivate_detail.learn_skill_list
+    prefer_list_list = ctx.task.detail.learn_skill_list
     for hint in ctx.cultivate_detail.turn_info.skill_hint_list:
         for level, prefer_list in enumerate(prefer_list_list):
             if hint.name in prefer_list or hint.name[:-1] in prefer_list:
@@ -161,7 +161,7 @@ def _skill(ctx: UmamusumeContext) -> float:
 def _attribute(ctx: UmamusumeContext) -> float:
     """缺口越大越需要"""
     current = ctx.cultivate_detail.turn_info.uma_attribute.to_tuple()
-    expect = ctx.cultivate_detail.expect_attribute
+    expect = ctx.task.detail.expect_attribute
     return sum(current[i] * (1 + (short if (short := expect[i] - current[i]) > 0 else 0) / expect[i])
                * ATTRIBUTE_PREFERENCE[i] for i in range(5)
                ) / sum(ATTRIBUTE_PREFERENCE) * ATTRIBUTE_BASIC_POINT
@@ -197,7 +197,7 @@ def _date_offset(ctx: UmamusumeContext, date: int, offset: int = 0) -> int:
 
 
 def _race_dates(ctx: UmamusumeContext) -> list:
-    return [race // 100 for race in ctx.cultivate_detail.extra_race_list]
+    return [race // 100 for race in ctx.task.detail.extra_race_list]
 
 
 def context_copy(origin_ctx: UmamusumeContext) -> UmamusumeContext:

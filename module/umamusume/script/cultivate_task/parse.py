@@ -12,7 +12,7 @@ from module.umamusume.context import UmamusumeContext
 from module.umamusume.asset import *
 from module.umamusume.define import *
 from module.umamusume.script.cultivate_task.const import DATE_YEAR, DATE_MONTH
-from module.umamusume.script.cultivate_task.types import SupportCardInfo
+# from module.umamusume.script.cultivate_task.types import SupportCardInfo
 import bot.base.log as logger
 
 log = logger.get_logger(__name__)
@@ -137,8 +137,8 @@ def parse_umamusume_basic_ability_value(ctx: UmamusumeContext, img):
                                                                                TrainingType.TRAINING_TYPE_POWER)
     ctx.cultivate_detail.turn_info.uma_attribute.will = trans_attribute_value(will_text, ctx,
                                                                               TrainingType.TRAINING_TYPE_WILL)
-    ctx.cultivate_detail.turn_info.uma_attribute.intelligence = trans_attribute_value(intelligence_text, ctx,
-                                                                                      TrainingType.TRAINING_TYPE_INTELLIGENCE)
+    ctx.cultivate_detail.turn_info.uma_attribute.intelligence = \
+        trans_attribute_value(intelligence_text, ctx, TrainingType.TRAINING_TYPE_INTELLIGENCE)
     ctx.cultivate_detail.turn_info.uma_attribute.skill_point = trans_attribute_value(skill_point_text, ctx)
 
 
@@ -197,8 +197,8 @@ def parse_train_main_menu_operations_availability(ctx: UmamusumeContext, img):
     rest_available = btn_rest_check_point[0] > 200
     train_available = btn_train_check_point[0] > 200
     skill_available = btn_skill_check_point[0] > 200
-    if btn_medic_room_check_point[0] > 200 and btn_medic_room_check_point[1] > 200 and btn_medic_room_check_point[
-        2] > 200:
+    if btn_medic_room_check_point[0] > 200 and btn_medic_room_check_point[1] > 200 and \
+            btn_medic_room_check_point[2] > 200:
         medic_room_available = True
     else:
         medic_room_available = False
@@ -252,7 +252,7 @@ def find_support_card(ctx: UmamusumeContext, img):
             pos = match_result.matched_area
             support_card_info = img[pos[0][1] - 125:pos[1][1] + 10, pos[0][0] - 140: pos[1][0] + 380]
             img[match_result.matched_area[0][1]:match_result.matched_area[1][1],
-            match_result.matched_area[0][0]:match_result.matched_area[1][0]] = 0
+                match_result.matched_area[0][0]:match_result.matched_area[1][0]] = 0
             support_card_level_img = support_card_info[125:145, 68:111]
             support_card_name_img = support_card_info[63:94, 132:439]
 
@@ -265,13 +265,13 @@ def find_support_card(ctx: UmamusumeContext, img):
             if support_card_level_text == "":
                 continue
             support_card_level = int(re.sub("\\D", "", support_card_level_text))
-            if support_card_level < ctx.cultivate_detail.follow_support_card_level:
+            if support_card_level < ctx.task.detail.follow_support_card_level:
                 continue
             support_card_text = ocr_line(support_card_name_img)
-            s = SequenceMatcher(None, support_card_text, ctx.cultivate_detail.follow_support_card_name)
+            s = SequenceMatcher(None, support_card_text, ctx.task.detail.follow_support_card_name)
             if s.ratio() > 0.7:
                 ctx.ctrl.click(match_result.center_point[0], match_result.center_point[1] - 75,
-                               "选择支援卡：" + ctx.cultivate_detail.follow_support_card_name + "<" + str(
+                               "选择支援卡：" + ctx.task.detail.follow_support_card_name + "<" + str(
                                    support_card_level) + ">")
                 return True
         else:
@@ -290,7 +290,7 @@ def parse_cultivate_event(ctx: UmamusumeContext, img) -> (str, list[int]):
         if match_result.find_match:
             event_selector_list.append(match_result.center_point)
             img[match_result.matched_area[0][1]:match_result.matched_area[1][1],
-            match_result.matched_area[0][0]:match_result.matched_area[1][0]] = 0
+                match_result.matched_area[0][0]:match_result.matched_area[1][0]] = 0
         else:
             break
     event_selector_list.sort(key=lambda x: x[1])
@@ -313,7 +313,7 @@ def find_race(ctx: UmamusumeContext, img, race_id: int = 0) -> bool:
                                        "选择比赛：" + str(RACE_LIST[race_id][1]))
                         return True
             img[match_result.matched_area[0][1]:match_result.matched_area[1][1],
-            match_result.matched_area[0][0]:match_result.matched_area[1][0]] = 0
+                match_result.matched_area[0][0]:match_result.matched_area[1][0]] = 0
         else:
             break
     return False
@@ -361,7 +361,7 @@ def find_skill(ctx: UmamusumeContext, img, skill: list[str], learn_any_skill: bo
                                 find = True
 
             img[match_result.matched_area[0][1]:match_result.matched_area[1][1],
-            match_result.matched_area[0][0]:match_result.matched_area[1][0]] = 0
+                match_result.matched_area[0][0]:match_result.matched_area[1][0]] = 0
 
         else:
             break
@@ -393,19 +393,19 @@ def get_skill_list(img, skill: list[list[str]], skill_blacklist: list[str]) -> l
                 is_gold = True if mask[120, 600] == 255 else False
 
                 skill_in_priority_list = False
-                skill_name_raw = "" #保存原始技能名字, 以防ocr产生偏差
+                skill_name_raw = ""  # 保存原始技能名字, 以防ocr产生偏差
                 priority = 99
                 for i in range(len(skill)):
                     found_similar_blacklist = find_similar_text(text, skill_blacklist, 0.7)
-                    found_similar_prioritylist = find_similar_text(text, skill[i], 0.7)
-                    if found_similar_blacklist != "": # 排除出现在黑名单中的技能
+                    found_similar_priority_list = find_similar_text(text, skill[i], 0.7)
+                    if found_similar_blacklist != "":  # 排除出现在黑名单中的技能
                         priority = -1
                         skill_name_raw = found_similar_blacklist
                         skill_in_priority_list = True
                         break
-                    elif found_similar_prioritylist != "":
+                    elif found_similar_priority_list != "":
                         priority = i
-                        skill_name_raw = found_similar_prioritylist
+                        skill_name_raw = found_similar_priority_list
                         skill_in_priority_list = True
                         break
                 if not skill_in_priority_list:
@@ -413,7 +413,7 @@ def get_skill_list(img, skill: list[list[str]], skill_blacklist: list[str]) -> l
 
                 available = not image_match(skill_info_img, REF_SKILL_LEARNED).find_match
 
-                if priority != -1: # 排除出现在黑名单中的技能
+                if priority != -1:  # 排除出现在黑名单中的技能
                     res.append({"skill_name": text,
                                 "skill_name_raw": skill_name_raw,
                                 "skill_cost": int(cost),
@@ -479,7 +479,7 @@ def parse_factor(ctx: UmamusumeContext):
                 else:
                     break
             img[match_result.matched_area[0][1]:match_result.matched_area[1][1],
-            match_result.matched_area[0][0]:match_result.matched_area[1][0]] = 0
+                match_result.matched_area[0][0]:match_result.matched_area[1][0]] = 0
             factor_info[0] = factor_name
             factor_info[1] = factor_level
             factor_list.append(factor_info)

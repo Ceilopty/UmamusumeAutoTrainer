@@ -10,8 +10,7 @@ from module.umamusume.asset.point import (TO_RACE, TO_TEAM_STADIUM, GO_HOME_FROM
                                           TEAM_STADIUM_NEXT, TEAM_STADIUM_RETURN, TEAM_STADIUM_SHORTEN,
                                           TEAM_STADIUM_OPPO_UP, TEAM_STADIUM_OPPO_MID, TEAM_STADIUM_OPPO_DOWN,
                                           TEAM_STADIUM_OPPO_REFRESH, TEAM_STADIUM_CONTINUE, TEAM_STADIUM_CHECK_RESULTS,
-                                          TEAM_STADIUM_CLAIM_REWARDS, TO_TIME_SALE,
-                                          TEAM_STADIUM_RACE_AGAIN, TEAM_STADIUM_RP_CANCEL)
+                                          TEAM_STADIUM_CLAIM_REWARDS, TEAM_STADIUM_RACE_AGAIN, TEAM_STADIUM_RP_CANCEL)
 from .select_opponent import select_opponent
 
 NO_RP_RETRY_PENDING = 7200
@@ -139,7 +138,7 @@ def parse_rp(ctx: UmamusumeContext) -> int:
     img = cv2.cvtColor(ctx.current_screen, cv2.COLOR_BGR2RGB)
     base_x, base_y, inc, rp = 425, 66, 31, 5
     for i in range(5):
-        if compare_color_equal(img[base_y, base_x], [81, 76, 89]):
+        if compare_color_equal(img[base_y, base_x].tolist(), [81, 76, 89]):
             rp -= 1
         base_x += inc
     return rp

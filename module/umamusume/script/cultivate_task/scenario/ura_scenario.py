@@ -6,7 +6,7 @@ from module.umamusume.asset import *
 from module.umamusume.define import ScenarioType, SupportCardFavorLevel, SupportCardType
 from module.umamusume.script.cultivate_task.types import SupportCardInfo
 from bot.recog.image_matcher import image_match, compare_color_equal
-from bot.recog.ocr import ocr_line, find_similar_text, ocr_digits
+from bot.recog.ocr import ocr_line
 
 import bot.base.log as logger
 
@@ -92,14 +92,14 @@ class URAScenario(BaseScenario):
             favor_process_check_list = [support_card_icon[95, 16], support_card_icon[95, 20]]
             support_card_favor_process = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_UNKNOWN
             for support_card_favor_process_pos in favor_process_check_list:
-                if compare_color_equal(support_card_favor_process_pos, [255, 235, 120]):
+                if compare_color_equal(support_card_favor_process_pos.tolist(), [255, 235, 120]):
                     support_card_favor_process = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_4
-                elif compare_color_equal(support_card_favor_process_pos, [255, 173, 30]):
+                elif compare_color_equal(support_card_favor_process_pos.tolist(), [255, 173, 30]):
                     support_card_favor_process = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_3
-                elif compare_color_equal(support_card_favor_process_pos, [162, 230, 30]):
+                elif compare_color_equal(support_card_favor_process_pos.tolist(), [162, 230, 30]):
                     support_card_favor_process = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_2
-                elif (compare_color_equal(support_card_favor_process_pos, [42, 192, 255]) or
-                      compare_color_equal(support_card_favor_process_pos, [109, 108, 117])):
+                elif (compare_color_equal(support_card_favor_process_pos.tolist(), [42, 192, 255]) or
+                      compare_color_equal(support_card_favor_process_pos.tolist(), [109, 108, 117])):
                     support_card_favor_process = SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_1
                 if support_card_favor_process != SupportCardFavorLevel.SUPPORT_CARD_FAVOR_LEVEL_UNKNOWN:
                     break

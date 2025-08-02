@@ -21,12 +21,3 @@ def write_preset(preset_json: str):
     preset_info = json.loads(preset_json)
     name = preset_info['name']
     write_file(presets_path+"/"+name+".json", preset_json)
-
-
-
-
-
-
-
-
-

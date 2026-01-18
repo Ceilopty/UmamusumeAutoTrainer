@@ -13,6 +13,7 @@ class Person(Data):
     cardRecord: int
     trainType: int
     personType: Enum
+    member_state: int  # 1为出现，0未出现
 
 
 class UraPerson(Person):
@@ -21,7 +22,6 @@ class UraPerson(Person):
 
 class AoharuPerson(Person):
     personType: AoharuPersonType
-    member_state: int       # 1为出现，0未出现
     soul_threshold_id: int  # 5为可魂爆
     soul_event_state: int   # 1为已魂爆
     isGuide: bool           # 青春训练
@@ -94,6 +94,8 @@ class TurnInfoURA(TurnInfo):
     ura_lmOutgoingUnlocked: bool
     ura_lmOutgoingRefused: bool
     ura_lmOutgoingUsed: int
+    versus_level: int
+    versus_event: bool
 
 
 class TurnInfoAoharu(TurnInfo):

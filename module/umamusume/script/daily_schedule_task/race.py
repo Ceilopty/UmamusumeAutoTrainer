@@ -11,34 +11,45 @@ from module.umamusume.context import UmamusumeContext, UmamusumeTaskType
 from module.umamusume.asset.template import (REF_DAILY_RACE_MULTI_RACE_ON, REF_DAILY_RACE_MULTI_RACE_OFF,
                                              REF_DAILY_RACE_MOONLIGHT, REF_DAILY_RACE_JUPITER,
                                              REF_DAILY_RACE_EASY, REF_DAILY_RACE_NORMAL, REF_DAILY_RACE_HARD,
+                                             REF_DAILY_RACE_EXTREME, DAILY_LEGEND_OPPONENT,
                                              )
 from module.umamusume.asset.point import TO_RACE, GO_HOME_FROM_RACE
 from ..common.common import on_task as _on_task
 
 
 def dr_script_main_menu(ctx: UmamusumeContext):
-    if ctx.daily_race_detail.raced:
+    if ctx.daily_schedule_detail.raced and (ctx.daily_schedule_detail.legend_raced or daily_raced(ctx, legend=True))\
+            or ctx.daily_schedule_detail.legend_raced and daily_raced(ctx):
         ctx.task.end_task(TaskStatus.TASK_STATUS_SUCCESS, EndTaskReason.COMPLETE)
-    elif daily_raced(ctx):
+    elif daily_raced(ctx) and daily_raced(ctx, legend=True):
         ctx.task.end_task(TaskStatus.TASK_STATUS_FAILED, UEndTaskReason.DAILY_RACED)
     else:
         ctx.ctrl.click_by_point(TO_RACE)
 
 
 def dr_script_race_home(ctx: UmamusumeContext):
-    if daily_raced(ctx) or ctx.daily_race_detail.raced:
+    if (daily_raced(ctx) or ctx.daily_schedule_detail.raced) and (daily_raced(ctx, legend=True) or
+                                                                  ctx.daily_schedule_detail.legend_raced):
         ctx.ctrl.click_by_point(GO_HOME_FROM_RACE)
         return
-    ctx.ctrl.click(200, 1050, "前往日常赛事")
+    ctx.ctrl.click(200, 1050, "前往日常安排")
+
+
+def dr_script_daily_schedule(ctx: UmamusumeContext):
+    ctx.daily_schedule_detail.legend_raced = True
+    if daily_raced(ctx) or ctx.daily_schedule_detail.raced:
+        ctx.ctrl.click_by_point(GO_HOME_FROM_RACE)
+        return
+    ctx.ctrl.click(210, 920, "前往日常赛事")
 
 
 def script_daily_race_dr_home(ctx: UmamusumeContext):
-    if daily_raced(ctx) or ctx.daily_race_detail.raced:
+    if daily_raced(ctx) or ctx.daily_schedule_detail.raced:
         ctx.ctrl.click(80, 1080, "返回")
         return
     race = [REF_DAILY_RACE_MOONLIGHT, REF_DAILY_RACE_JUPITER][ctx.task.detail.daily_race_type]
     difficulty = [REF_DAILY_RACE_EASY, REF_DAILY_RACE_NORMAL,
-                  REF_DAILY_RACE_HARD][ctx.task.detail.daily_race_difficulty]
+                  REF_DAILY_RACE_HARD, REF_DAILY_RACE_EXTREME][ctx.task.detail.daily_race_difficulty]
     retry = 3
     while retry := retry - 1:
         match_result = image_match(ctx.ctrl.get_screen(True), race)
@@ -55,7 +66,7 @@ def script_daily_race_dr_home(ctx: UmamusumeContext):
 
 
 def script_daily_race_detail(ctx: UmamusumeContext):
-    if daily_raced(ctx) or ctx.daily_race_detail.raced:
+    if daily_raced(ctx) or ctx.daily_schedule_detail.raced:
         ctx.ctrl.click(200, 1180, "取消")
         return
     img = cv2.cvtColor(ctx.current_screen, cv2.COLOR_BGR2GRAY)
@@ -66,7 +77,7 @@ def script_daily_race_detail(ctx: UmamusumeContext):
 
 
 def script_daily_race_select_racer(ctx: UmamusumeContext):
-    if daily_raced(ctx) or ctx.daily_race_detail.raced:
+    if daily_raced(ctx) or ctx.daily_schedule_detail.raced:
         ctx.ctrl.click(360, 1220, "回主页")
         return
     # 未触发限时特卖时有概率导致选择赛事和难度的页面左上确实选择参赛优骏少女，导致卡住。
@@ -82,7 +93,7 @@ def script_daily_race_multi_race(ctx: UmamusumeContext):
 
 
 def script_daily_race_result(ctx: UmamusumeContext):
-    ctx.daily_race_detail.raced = True
+    ctx.daily_schedule_detail.raced = True
     ctx.ctrl.click(360, 1180, "关闭参赛结果")
     time.sleep(2)
 
@@ -92,17 +103,19 @@ def script_daily_race_buy_ticket(ctx: UmamusumeContext):
     ctx.ctrl.click(200, 830, "放弃购买入场券")
 
 
-def daily_raced(ctx: UmamusumeContext):
-    if ts := ctx.task.detail.timestamp['daily_raced'].get(ctx.task.device_name or "default"):
+def daily_raced(ctx: UmamusumeContext, legend=False):
+    key = legend and 'daily_legend_raced' or 'daily_raced'
+    if ts := ctx.task.detail.timestamp[key].get(ctx.task.device_name or "default"):
         last = datetime.datetime.fromtimestamp(ts)
         refresh = croniter.croniter("0 5 * * *", last).get_next(datetime.datetime)
         return datetime.datetime.now() < refresh
     return False
 
 
-def set_daily_raced(ctx: UmamusumeContext):
-    ctx.task.detail.timestamp['daily_raced'][ctx.task.device_name or "default"] = datetime.datetime.now().timestamp()
+def set_daily_raced(ctx: UmamusumeContext, legend=False):
+    key = legend and 'daily_legend_raced' or 'daily_raced'
+    ctx.task.detail.timestamp[key][ctx.task.device_name or "default"] = datetime.datetime.now().timestamp()
 
 
 def on_task(ctx: UmamusumeContext):
-    return _on_task(ctx, UmamusumeTaskType.UMAMUSUME_TASK_TYPE_DAILY_RACE)
+    return _on_task(ctx, UmamusumeTaskType.UMAMUSUME_TASK_TYPE_DAILY_SCHEDULE)

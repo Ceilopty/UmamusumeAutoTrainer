@@ -442,12 +442,12 @@
                 </div>
               </div>
             </div>
-            <!--日常赛事-->
+            <!--日常安排-->
             <div v-if="selectedUmamusumeTaskType?.id === 4">
               <div class="row">
                 <div class="col">
                   <div class="form-group">
-                    <label for="selectDailyRace">⭐ 目标赛事</label>
+                    <label for="selectDailyRace">⭐ 目标日常赛事</label>
                     <select v-model="selectedDailyRace" class="form-control" id="selectDailyRace">
                       <option v-for="race in daily_race_type" :value="race.id">{{race.name}}</option>
                     </select>
@@ -458,6 +458,14 @@
                     <label for="selectDailyRaceDifficulty">⭐ 目标难度</label>
                     <select v-model="selectedDailyRaceDifficulty" class="form-control" id="selectDailyRaceDifficulty">
                       <option v-for="diff in daily_race_difficulty" :value="diff.id">{{diff.name}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="form-group">
+                    <label for="selectDailyLegendOpponent">⭐ 目标日常传奇赛事</label>
+                    <select v-model="selectedDailyLegendOpponent" class="form-control" id="selectDailyLegendOppoenet">
+                      <option v-for="oppo in daily_legend_opponent" :value="oppo.id">{{oppo.name}}</option>
                     </select>
                   </div>
                 </div>
@@ -568,7 +576,7 @@ export default {
         {id: 1, name: "育成"},
         {id: 2, name: "竞技场"},
         {id: 3, name: "捐鞋"},
-        {id: 4, name: "日常赛事"},
+        {id: 4, name: "日常安排"},
         {id: 0, name: "自定义"},
       ],
       scenarioList:[
@@ -582,6 +590,8 @@ export default {
         {id: 8, name: "大丰食祭"},
         {id: 9, name: "机械杯"},
         {id: 10, name: "闪耀传说"},
+        {id: 11, name: "无人岛"},
+        {id: 12, name: "温泉乡"},
       ],
       umamusumeList:[
         {id:1, name:'特别周'},
@@ -954,7 +964,39 @@ export default {
           {id:0, name:"EASY"},
           {id:1, name:"NORMAL"},
           {id:2, name:"HARD"},
+          {id:3, name:"EXTREME"},
         ],
+        daily_legend_opponent:[
+        {id:101, name: "神鹰（全国杯）"},
+        {id:102, name: "特别周（全国杯）"},
+        {id:103, name: "鲁道夫象征（全国杯）"},
+        {id:201, name: "帝王光辉（短途者锦标赛）"},
+        {id:202, name: "大树快车（短途者锦标赛）"},
+        {id:203, name: "樱花进王（短途者锦标赛）"},
+        {id:204, name: "真机伶（短途者锦标赛）"},
+        {id:301, name: "胜利奖券（全国德比）"},
+        {id:302, name: "伏特加（全国德比）"},
+        {id:303, name: "东海帝王（全国德比）"},
+        {id:401, name: "重炮（天王奖春）"},
+        {id:402, name: "目白麦昆（天王奖春）"},
+        {id:403, name: "好歌剧（天王奖春）"},
+        {id:404, name: "超级溪流（天王奖春）"},
+        {id:501, name: "目白莱恩（宝冢纪念）"},
+        {id:502, name: "无声铃鹿（宝冢纪念）"},
+        {id:503, name: "黄金船（宝冢纪念）"},
+        {id:601, name: "丸善斯基（朝日杯未来锦标赛）"},
+        {id:602, name: "富士奇石（朝日杯未来锦标赛）"},
+        {id:603, name: "美浦波旁（朝日杯未来锦标赛）"},
+        {id:701, name: "待兼福来（菊花奖）"},
+        {id:702, name: "青云天空（菊花奖）"},
+        {id:701, name: "琵琶晨光（菊花奖）"},
+        {id:801, name: "气槽（天王奖）"},
+        {id:802, name: "荣进闪耀（天王奖）"},
+        {id:803, name: "爱丽数码（天王奖）"},
+        {id:901, name: "优秀素质（中山大奖赛）"},
+        {id:902, name: "草上飞（中山大奖赛）"},
+        {id:903, name: "小栗帽（中山大奖赛）"},
+      ],
       // ===  已选择  ===
       selectedExecuteMode: 1,
       expectTimes: 0,
@@ -1002,6 +1044,7 @@ export default {
       askShoeType: 1,
       selectedDailyRace: 0,
       selectedDailyRaceDifficulty: 2,
+      selectedDailyLegendOpponent: 101,
       device_name:"",
     }
   },
@@ -1125,6 +1168,7 @@ export default {
         payload.attachment_data = {
           "daily_race_type": this.selectedDailyRace,
           "daily_race_difficulty": this.selectedDailyRaceDifficulty,
+          "daily_legend_opponent": this.selectedDailyLegendOpponent,
           "time_sale": this.timeSale
         }
       }
@@ -1350,6 +1394,7 @@ export default {
         else if(task.task_type ===4){
           this.selectedDailyRace = task.detail.daily_race_type
           this.selectedDailyRaceDifficulty = task.detail.daily_race_difficulty
+          this.selectedDailyLegendOpponent = task.detail.daily_legend_opponent
           this.timeSale = [...task.detail.time_sale.sort((a,b)=>a-b)]
         }
       }

@@ -8,7 +8,7 @@ from ..time_sale.info import TITLE as TS_TITLE
 
 TITLE = {
     "赛事详情": script_daily_race_detail,
-    "多次参赛": script_daily_race_multi_race,
+    "一键参赛": script_daily_race_multi_race,
     "参赛结果": script_daily_race_result,
     "购买日常赛事入场券": script_daily_race_buy_ticket,
 }

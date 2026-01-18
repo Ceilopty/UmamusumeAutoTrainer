@@ -103,12 +103,14 @@ class DonateContextDetail:
         self.swiped = 0
 
 
-class DailyRaceContextDetail(TimeSaleTaskContextDetail):
+class DailyScheduleContextDetail(TimeSaleTaskContextDetail):
     raced: bool
+    legend_raced: bool
 
     def __init__(self):
         super().__init__()
         self.raced = False
+        self.legend_raced = False
 
 
 class UmamusumeContext(BotContext):
@@ -116,7 +118,7 @@ class UmamusumeContext(BotContext):
     cultivate_detail: CultivateContextDetail
     team_stadium_detail: TeamStadiumContextDetail
     donate_detail: DonateContextDetail
-    daily_race_detail: DailyRaceContextDetail
+    daily_schedule_detail: DailyScheduleContextDetail
     time_sale_detail: TimeSaleContextDetail
 
     def __init__(self, task, ctrl):
@@ -149,9 +151,9 @@ def build_context(task: UmamusumeTask, ctrl) -> UmamusumeContext:
         case UmamusumeTaskType.UMAMUSUME_TASK_TYPE_DONATE:
             detail = DonateContextDetail()
             ctx.donate_detail = detail
-        case UmamusumeTaskType.UMAMUSUME_TASK_TYPE_DAILY_RACE:
-            detail = DailyRaceContextDetail()
-            ctx.daily_race_detail = detail
+        case UmamusumeTaskType.UMAMUSUME_TASK_TYPE_DAILY_SCHEDULE:
+            detail = DailyScheduleContextDetail()
+            ctx.daily_schedule_detail = detail
             ctx.time_sale_detail = detail.time_sale_detail
             ctx.time_sale_detail.refresh = detail.get_refresh_method(task.detail.time_sale)
     return ctx

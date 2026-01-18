@@ -62,6 +62,7 @@ def script_circle_ranking_result(ctx: UmamusumeContext):
 def script_donate_requests(ctx: UmamusumeContext):
     """
     道具捐赠请求
+    ### 一周年实装一键捐赠，大幅简化流程
     大部分东西都在这里
     分为：
     1、刚刚点进捐鞋列表的画面，寻找点亮的“捐赠”，点下去。若没有则往下滑。
@@ -111,6 +112,14 @@ def script_donate_requests(ctx: UmamusumeContext):
         ctx.ctrl.click_by_point(DONATE_ASK_CONFIRM)
         ctx.donate_detail.asked = True
         set_timestamp(ctx, 'asked')
+        return
+    # 改版后直接一键捐
+    if compare_color_equal(cv2.cvtColor(ctx.current_screen, cv2.COLOR_BGR2RGB)[1100, 460].tolist(), [244, 242, 247]):
+        ctx.ctrl.click(550, 1100, "一键捐赠")
+        return
+    else:
+        set_timestamp(ctx, 'no_more_request')
+        ctx.ctrl.click_by_point(DONATE_RETURN_FROM_REQ)
         return
     # 情况1-1：找亮鞋
     if image_match(img, BTN_DONATE_AVAILABLE).find_match:

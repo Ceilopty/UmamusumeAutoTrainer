@@ -114,7 +114,7 @@ def convert_support_type(person: UraPerson | AoharuPerson) -> SupportCardType:
             match person.personType:
                 case UraPersonType.Normal:
                     return SupportCardType(_dict[person.trainType])
-                case UraPersonType.Akikawa | UraPersonType.Otonashi | UraPersonType.Kiryuuin:
+                case UraPersonType.Akikawa | UraPersonType.Otonashi | UraPersonType.Kiryuuin | UraPersonType.Meek:
                     return SupportCardType.SUPPORT_CARD_TYPE_NPC
                 case UraPersonType.HayakawaS | UraPersonType.KiryuuinS:
                     return SupportCardType.SUPPORT_CARD_TYPE_FRIEND
@@ -138,7 +138,7 @@ def get_name_from_person_and_ids(scenario: ScenarioType, person: Person, card_id
     if person.cardIdInGame == -1:  # NPC,
         match scenario:
             case ScenarioType.SCENARIO_TYPE_URA:
-                sid = {1: 9004, 3: 9001, 4: 9002, 5: 9003, 6: 9004}[person.personType.value]
+                sid = {1: 9004, 3: 9001, 4: 9002, 5: 9003, 6: 9004, 7: 2001}[person.personType.value]
             case ScenarioType.SCENARIO_TYPE_AOHARU:
                 if person.personType.value == 3:
                     if person.charaId == 0:

@@ -1,5 +1,5 @@
 from ....context import UmamusumeContext, TurnInfo, Condition
-from ..database.klass import Propers, Skill, _Nameable, TalentSkill
+from ..database.klass import Propers, Skill, TalentSkill
 from copy import copy
 
 
@@ -18,6 +18,8 @@ class SkillData(Skill):
     actual_grade: int
 
     def __init__(self, skill: Skill | dict):
+        if isinstance(skill, dict):
+            super().__init__(skill)
         if not isinstance(skill, Skill):
             skill = Skill(skill)
         self._j_name = skill.j_name
@@ -63,7 +65,7 @@ class SkillData(Skill):
         return self.id == other.id
 
     def __str__(self):
-        return super().__str__() + str(self.cost)
+        return super().__str__() + '_' + str(self.cost)
 
 
 class SkillManager(list):
@@ -110,7 +112,7 @@ class SkillManagerGenerator:
     def apply_hint(skill: SkillData, chara_info: TurnInfo, level: int):
         cut = 10 if Condition.CONDITION_KIREMONO in chara_info.uma_condition_list else 0
         off = {0: 0, 1: 10, 2: 20, 3: 30, 4: 35, 5: 40}.get(level)
-        skill.cost = (skill.cost * (100 - off - cut) + 50) // 100
+        skill.cost = (skill.cost * (100 - off - cut) * 100 + 4999) // 10000
 
     @staticmethod
     def apply_proper(skill: SkillData, chara_info: TurnInfo):
@@ -205,19 +207,24 @@ class SkillManagerGenerator:
                         # 仅在第一次遇到时操作
                         if inferior.grade > 0:
                             break
+                        # 消除负面技能是正收益
                         inferior.grade = -inferior.grade
+                        # 消除后继续学习要加算消除的费用和效果
                         superior = inferior.superior
                         while superior is not None:
                             superior.grade += inferior.grade
                             superior.cost += inferior.cost
                             superior = superior.superior
                         break
+                    # 已学下位技能则效用降低（只计算增量）
                     skill.grade -= inferior.grade
                     break
                 elif inferior.rate > 0:
+                    # 未学的普通技能，
                     skill.cost += inferior.cost
                     inferior = inferior.inferior
                 else:
+                    # 未学的负面技能，阻断，不参与计算
                     inferior.superior.inferior = None
                     break
         return SkillManager(skills)
@@ -351,9 +358,9 @@ class SkillManagerGenerator:
 
         # 育成中学习技能的调整
         if not ctx.cultivate_detail.cultivate_finish:
-            if ctx.cultivate_detail.learn_skill_only_user_provided:
+            if ctx.task.detail.learn_skill_only_user_provided:
                 group_ids = set(x.group_id for level in target_list for x in level)
-            elif ctx.cultivate_detail.learn_skill_before_race and ctx.cultivate_detail.turn_info.racing:
+            elif ctx.task.detail.learn_skill_before_race and ctx.cultivate_detail.turn_info.racing:
                 # 赛前仅学习第一级
                 group_ids = set(x.group_id for level in target_list[0:1] for x in level)
             else:
@@ -367,9 +374,8 @@ class SkillManagerGenerator:
         return tips
 
     @staticmethod
-    def dp(tips: list[SkillData],
-           total_sp: int):
-        learn = []
+    def dp(tips: list[SkillData], total_sp: int) -> tuple[list[SkillData], list[int], int]:
+        learn: list[SkillData] = []
         # 01背包变种
         _dp = [0] * (total_sp + 1)  # 多计算100pt，用于计算“边际性价比” 就算了吧 节约时间 py好慢的
         dp_log = []  # 记录dp时所选的技能，存技能Id

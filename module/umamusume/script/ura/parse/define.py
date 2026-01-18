@@ -8,6 +8,7 @@ class UraPersonType(Enum):
     1代表桐生院支援卡（R或SR都行），
     2代表普通支援卡，3绿帽，
     4理事长，5记者，6不带卡的桐生院，
+    7米可
     暂不支持其他友人/团队卡"""
     Unknown = 0
     KiryuuinS = 1
@@ -16,6 +17,7 @@ class UraPersonType(Enum):
     Akikawa = 4
     Otonashi = 5
     Kiryuuin = 6
+    Meek = 7
 
 
 class AoharuPersonType(Enum):

@@ -35,6 +35,7 @@ TITLE = {
     "维护中": lambda ctx: ctx.ctrl.click(360, 830, "返回标题页面"),
     "每日宝石礼包": lambda ctx: ctx.ctrl.click(200, 830, "取消"),
     "训练员信息": lambda ctx: ctx.ctrl.click(360, 1180, "关闭训练员信息"),
+    "训练通行证": lambda ctx: ctx.ctrl.click(200, 835, "关闭通行证提示"),
 }
 
 

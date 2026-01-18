@@ -5,6 +5,8 @@ class ChoiceArray:
     select_index: int
     receive_item_id: int
     target_race_id: int
+    gain_select_id_index: int
+    select_icon: int
 
 
 class EventContentsInfo(Data):

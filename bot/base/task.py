@@ -1,3 +1,4 @@
+import gc
 import time
 from enum import Enum
 from abc import abstractmethod, ABCMeta
@@ -64,6 +65,7 @@ class Task(metaclass=ABCMeta):
                  extra={"end_task_id": self.task_id})
         self.task_status = status
         self.end_task_reason = reason
+        gc.collect()
 
     @abstractmethod
     def start_task(self) -> None:

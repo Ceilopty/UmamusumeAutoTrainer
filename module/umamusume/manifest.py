@@ -31,13 +31,14 @@ from module.umamusume.script.donate_task.donate import (d_script_main_menu, scri
                                                         script_circle_ranking_result,
                                                         )
 from module.umamusume.script.donate_task.info import d_script_info
-from module.umamusume.script.daily_race_task.race import (dr_script_main_menu,
-                                                          dr_script_race_home,
-                                                          script_daily_race_dr_home,
-                                                          script_daily_race_select_racer,
-                                                          )
-from module.umamusume.script.daily_race_task.info import dr_script_info
-from module.umamusume.script.common.common import script_common_not_found_ui
+from module.umamusume.script.daily_schedule_task.race import (dr_script_main_menu,
+                                                              dr_script_race_home,
+                                                              dr_script_daily_schedule,
+                                                              script_daily_race_dr_home,
+                                                              script_daily_race_select_racer,
+                                                              )
+from module.umamusume.script.daily_schedule_task.info import dr_script_info
+from module.umamusume.script.common.common import script_common_not_found_ui, script_common_not_found_script
 from module.umamusume.protocol.preset import AddPresetRequest
 from module.umamusume.task import UmamusumeTaskType, build_task
 from module.umamusume.user_data import read_presets, write_preset
@@ -126,10 +127,11 @@ script_dicts: Dict[UmamusumeTaskType, dict] = {
         CIRCLE_RANKING_RESULT: script_circle_ranking_result,
         INFO: d_script_info,
     },
-    UmamusumeTaskType.UMAMUSUME_TASK_TYPE_DAILY_RACE: {
+    UmamusumeTaskType.UMAMUSUME_TASK_TYPE_DAILY_SCHEDULE: {
         MAIN_MENU: dr_script_main_menu,
         MAIN_MENU_CONTINUE: dr_script_main_menu,
         RACE_HOME: dr_script_race_home,
+        DAILY_SCHEDULE: dr_script_daily_schedule,
         DAILY_RACE_HOME: script_daily_race_dr_home,
         DAILY_RACE_SELECT_RACER: script_daily_race_select_racer,
         TIME_SALE_MAIN: script_time_sale_main,
@@ -153,6 +155,7 @@ def exec_script(ctx: UmamusumeContext):
         default_script_dict[ctx.current_ui](ctx)
     else:
         print("未找到此界面对应的默认脚本")
+        script_common_not_found_script(ctx)
 
 
 UmamusumeManifest = AppManifest(

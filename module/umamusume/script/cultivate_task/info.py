@@ -62,6 +62,8 @@ TITLE = [
     # 训练员技能考试
     "选择养成模式",
     "活动首页跳转确认",
+    # 杂项
+    "新剧本",
 ]
 
 
@@ -220,6 +222,9 @@ def script_info(ctx: UmamusumeContext):
         if title_text == TITLE[41]:
             # 活动首页跳转确认
             ctx.ctrl.click(200, 835, "取消跳转活动首页")
+        if title_text == TITLE[42]:
+            # 新剧本
+            ctx.ctrl.click(360, 920, "关闭")
         if title_text not in TITLE and title_text in COMMON_INFO:
             COMMON_INFO[title_text](ctx)
         time.sleep(1)

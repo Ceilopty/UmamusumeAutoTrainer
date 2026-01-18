@@ -1,6 +1,7 @@
 if __name__ == '__main__':
-    import database
-    import gallop
+    # import database
+    # import gallop
+    pass
 else:
     from . import database
     from . import parse

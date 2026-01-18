@@ -243,12 +243,12 @@ def script_follow_support_card_select(ctx: UmamusumeContext):
             break
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         if compare_color_equal(img[1096, 693].tolist(), [125, 120, 142]):
-            while True:
+            """while True:
                 img = cv2.cvtColor(ctx.ctrl.get_screen(), cv2.COLOR_BGR2RGB)
                 if compare_color_equal(img[127, 697].tolist(), [211, 209, 219]):
                     ctx.ctrl.swipe(x1=350, y1=400, x2=350, y2=1000, duration=200, name="")
                 else:
-                    break
+                    break"""
             ctx.ctrl.click_by_point(FOLLOW_SUPPORT_CARD_SELECT_REFRESH)
             return
         ctx.ctrl.swipe(x1=350, y1=1000, x2=350, y2=400, duration=1000, name="")
@@ -494,7 +494,7 @@ def script_fujikiseki_show_result_1(ctx: UmamusumeContext):
 
 
 def script_fujikiseki_show_result_2(ctx: UmamusumeContext):
-    ctx.ctrl.click(360, 1120, "确认富士奇石表演秀模式结果")
+    ctx.ctrl.click(360, 1150, "确认富士奇石表演秀模式结果")
 
 
 # 1.878s 2s 0.649s

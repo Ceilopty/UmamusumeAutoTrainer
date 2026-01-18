@@ -22,6 +22,7 @@ def ura_script_cultivate_learn_skill(ctx: UmamusumeContext,
     ctx.cultivate_detail.turn_info.log_turn_info(ctx.task.detail.scenario, False, True)
     # 找出最佳技能
     target_skill_list = []
+    cost_dict = {}
     learn = parse_skill_tips_response(ctx,
                                       normalize_priority_and_blacklist(learn_skill_list),
                                       normalize_priority_and_blacklist(learn_skill_blacklist))
@@ -31,18 +32,22 @@ def ura_script_cultivate_learn_skill(ctx: UmamusumeContext,
             if skill.inferior is not None and skill.inferior.id not in learnt_id:  # "○" unlearn
                 if skill.inferior.inferior is not None and skill.inferior.inferior.id in learnt_id:  # got "×"
                     target_skill_list.append(skill.inferior.inferior.name_while_learning)
+                    cost_dict[skill.inferior.inferior.name_while_learning] = skill.inferior.inferior.cost
                 target_skill_list.append(skill.inferior.name_while_learning)
+                cost_dict[skill.inferior.name_while_learning] = skill.inferior.cost
         if skill.rate == 1 and skill.rarity == 1:  # "○" and normal skills:
             if skill.inferior is not None and skill.inferior.id in learnt_id:  # got "×"
                 target_skill_list.append(skill.inferior.name_while_learning)
+                cost_dict[skill.inferior.name_while_learning] = skill.inferior.cost
         target_skill_list.append(skill.name_while_learning)
+        cost_dict[skill.name_while_learning] = skill.cost
 
     # 点技能
     import time
     retry = 0
     while True:
         img = ctx.ctrl.get_screen()
-        found = find_skill(origin_ctx, img, target_skill_list, learn_any_skill=False)
+        found = find_skill(origin_ctx, img, target_skill_list, False, cost_dict)
         if len(target_skill_list) == 0:
             break
         if found:  # 针对一个技能点多次的情况，找到并点到了先不翻页
@@ -146,7 +151,7 @@ def parse_skill_tips_response(ctx: UmamusumeContext,
     return learn
 
 
-def find_skill(ctx: UmamusumeContext, img, skill: list[str], learn_any_skill: bool) -> bool:
+def find_skill(ctx: UmamusumeContext, img, skill: list[str], learn_any_skill: bool, cost: dict[str, int]) -> bool:
     """源自cultivate_task.parse, 由于识别问题需要魔改一下"""
     import re
     import cv2
@@ -186,6 +191,10 @@ def find_skill(ctx: UmamusumeContext, img, skill: list[str], learn_any_skill: bo
                         tmp_img = ctx.ctrl.get_screen()
                         pt_text = re.sub("\\D", "", ocr_line(tmp_img[400: 440, 490: 665]))
                         skill_pt_cost_text = re.sub("\\D", "", ocr_line(skill_info_img[69: 99, 525: 588]))
+                        assumed_cost = cost.get(result, "未知")
+                        log.debug("当前技能点：%s，预计花费：%s，实际花费：%s", pt_text, assumed_cost, skill_pt_cost_text)  # DEBUG
+                        if str(assumed_cost) != skill_pt_cost_text:
+                            log.warning("费用计算错误:%s，请检查计算步骤", result)
                         if pt_text != "" and skill_pt_cost_text != "":
                             pt = int(pt_text)
                             skill_pt_cost = int(skill_pt_cost_text)

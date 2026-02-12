@@ -1,0 +1,42 @@
+你好作者，联系不到你抱歉用这种方式联系
+
+
+我在运行run.ps1时提醒我需要对数据库进行更新
+[red]数据文件events.br不存在，请尝试重新更新数据[/]
+Traceback (most recent call last):
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\main.py", line 6, in <module>
+    from module.umamusume.manifest import UmamusumeManifest
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\manifest.py", line 9, in <module>
+    from module.umamusume.script.cultivate_task.cultivate import *
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\script\cultivate_task\cultivate.py", line 14, in <module>
+    from module.umamusume.script.ura.cultivate import ura_parse_cultivate_main_menu, ura_get_event_choice_by_effect
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\script\ura\__init__.py", line 5, in <module>
+    from . import database
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\script\ura\database\__init__.py", line 10, in <module>
+    DataBase.initialize()
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\script\ura\database\database.py", line 225, in initialize
+    cls.events = {x.id: x for x in cls._try_deserialize(EVENT_NAME_FILEPATH,
+TypeError: 'NoneType' object is not iterable
+
+随后自己创建个空的文件提示格式不对或损坏
+
+Traceback (most recent call last):
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\main.py", line 6, in <module>
+    from module.umamusume.manifest import UmamusumeManifest
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\manifest.py", line 9, in <module>
+    from module.umamusume.script.cultivate_task.cultivate import *
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\script\cultivate_task\cultivate.py", line 14, in <module>
+    from module.umamusume.script.ura.cultivate import ura_parse_cultivate_main_menu, ura_get_event_choice_by_effect
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\script\ura\__init__.py", line 5, in <module>
+    from . import database
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\script\ura\database\__init__.py", line 10, in <module>
+    DataBase.initialize()
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\script\ura\database\database.py", line 225, in initialize
+    cls.events = {x.id: x for x in cls._try_deserialize(EVENT_NAME_FILEPATH,
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\script\ura\database\database.py", line 266, in _try_deserialize
+    return f(json.loads(cls._load(path), **kw))
+  File "E:\BBchannel_ver_2.6.20220920_FullPack\Umamusume\UmamusumeAutoTrainer\module\umamusume\script\ura\database\database.py", line 277, in _load
+    return brotli.decompress(file.read()).decode()
+brotli.error: BrotliDecompress failed
+
+请问这个数据库怎么更新，具体怎么创建，格式大概是什么谢谢
